@@ -16,13 +16,13 @@ import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.texttechnologylab.annotation.DocumentAnnotation;
-import org.texttechnologylab.mdd.util.SHA1;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
@@ -116,7 +116,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         }
     }
 
-    private static class SentenceDataPoint {
+    private class SentenceDataPoint {
         int rootDistance;
         int numberOfSyntacticLinks;
         List<Integer> dependencyDistances;
@@ -169,14 +169,18 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         }
 
         public void save() throws IOException {
-            MessageDigest digest = SHA1.getSha1Digest();
-            this.documentMetaData.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
-            this.documentAnnotation.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
-            String metaHash = Hex.encodeHexString(digest.digest());
+            try {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                this.documentMetaData.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
+                this.documentAnnotation.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
+                String metaHash = Hex.encodeHexString(digest.digest());
 
-            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(getOutputStream(metaHash, ".json"), StandardCharsets.UTF_8))) {
-                String json = new Gson().toJson(this);
-                writer.write(json);
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(getOutputStream(metaHash, ".json"), StandardCharsets.UTF_8))) {
+                    String json = new Gson().toJson(this);
+                    writer.write(json);
+                }
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
             }
         }
     }
