@@ -170,17 +170,19 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
             this.documentAnnotation = new TreeMap<>();
             for (Feature feature : documentAnnotation.getType().getFeatures()) {
                 try {
-                    this.documentAnnotation.put(feature.getShortName(), documentAnnotation.getFeatureValueAsString(feature));
-                } catch (CASRuntimeException e) {
-                    logger.debug(e.toString());
+                    String featureValueAsString = documentAnnotation.getFeatureValueAsString(feature);
+                    if (Objects.nonNull(featureValueAsString))
+                        this.documentAnnotation.put(feature.getShortName(), featureValueAsString);
+                } catch (CASRuntimeException ignored) {
                 }
             }
             this.documentMetaData = new TreeMap<>();
             for (Feature feature : documentMetaData.getType().getFeatures()) {
                 try {
-                    this.documentMetaData.put(feature.getShortName(), documentMetaData.getFeatureValueAsString(feature));
-                } catch (CASRuntimeException e) {
-                    logger.debug(e.toString());
+                    String featureValueAsString = documentMetaData.getFeatureValueAsString(feature);
+                    if (Objects.nonNull(featureValueAsString))
+                        this.documentMetaData.put(feature.getShortName(), featureValueAsString);
+                } catch (CASRuntimeException ignored) {
                 }
             }
             this.sentences = new ArrayList<>();
