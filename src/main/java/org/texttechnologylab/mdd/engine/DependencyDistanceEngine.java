@@ -30,6 +30,9 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     public static final String PARAM_FAIL_ON_ERROR = "pFailOnError";
     @ConfigurationParameter(name = PARAM_FAIL_ON_ERROR, mandatory = false, defaultValue = "false")
     protected Boolean pFailOnError;
+    public static final String PARAM_ULID_SUFFIX = "pUlidSuffix";
+    @ConfigurationParameter(name = PARAM_ULID_SUFFIX, mandatory = false, defaultValue = "false")
+    protected Boolean pUlidSuffix;
 
     @Override
     public void process(JCas jCas) throws AnalysisEngineProcessException {
@@ -174,7 +177,9 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 this.documentMetaData.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
                 this.documentAnnotation.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
-                String metaHash = Hex.encodeHexString(digest.digest()) + "-" + ULID.random();
+                String metaHash = Hex.encodeHexString(digest.digest());
+
+                if (pUlidSuffix) metaHash += "-" + ULID.random();
 
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(getOutputStream(metaHash, ".json"), StandardCharsets.UTF_8))) {
                     String json = new Gson().toJson(this);

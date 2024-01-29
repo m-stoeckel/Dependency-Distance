@@ -35,22 +35,22 @@ public class Run {
                 case "--config":
                     pMongoDbConfigPath = iterator.next();
                     break;
-                case "filter":
+                case "--filter":
                     pFilter = iterator.next();
                     break;
-                case "scale":
+                case "--scale":
                     pScale = Integer.parseInt(iterator.next());
                     break;
-                case "output":
+                case "--output":
                     pOutput = iterator.next();
                     break;
-                case "overwrite":
+                case "--overwrite":
                     pOverwrite = Boolean.parseBoolean(iterator.next());
                     break;
-                case "compression":
+                case "--compression":
                     pCompression = CompressionMethod.valueOf(iterator.next());
                     break;
-                case "failOnError":
+                case "--failOnError":
                     pFailOnError = Boolean.parseBoolean(iterator.next());
                     break;
                 default:
