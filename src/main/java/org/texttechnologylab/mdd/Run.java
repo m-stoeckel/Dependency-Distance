@@ -1,8 +1,7 @@
-package org.texttechnologylab;
+package org.texttechnologylab.mdd;
 
 import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.connection.mongodb.MongoDBConfig;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIPipelineComponent;
@@ -12,23 +11,54 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 import org.texttechnologylab.parliament.duui.DUUIGerParCorReader;
 
+import java.util.Arrays;
+import java.util.Iterator;
+
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
 public class Run {
+    public static void main(String[] args) {
+        String pMongoDbConfigPath = System.getProperty("config", "src/main/resources/mongodb.ini");
+        String pFilter = System.getProperty("filter", "{}");
+        int pScale = Integer.parseInt(System.getProperty("scale", "8"));
 
-    @Test
-    public void GerParCor() {
+        String pOutput = System.getProperty("output", "/storage/projects/stoeckel/syntactic-language-change/mdd/");
+        boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
+        CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
+
+        boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "false"));
+
+        Iterator<String> iterator = Arrays.stream(args).iterator();
+        while (iterator.hasNext()) {
+            String argName = iterator.next();
+            switch (argName) {
+                case "--config":
+                    pMongoDbConfigPath = iterator.next();
+                    break;
+                case "filter":
+                    pFilter = iterator.next();
+                    break;
+                case "scale":
+                    pScale = Integer.parseInt(iterator.next());
+                    break;
+                case "output":
+                    pOutput = iterator.next();
+                    break;
+                case "overwrite":
+                    pOverwrite = Boolean.parseBoolean(iterator.next());
+                    break;
+                case "compression":
+                    pCompression = CompressionMethod.valueOf(iterator.next());
+                    break;
+                case "failOnError":
+                    pFailOnError = Boolean.parseBoolean(iterator.next());
+                    break;
+                default:
+                    throw new IllegalArgumentException(String.format("Encountered illegal argument '%s' in CLI arguments: %s", argName, Arrays.toString(args)));
+            }
+        }
+
         try {
-            String pMongoDbConfigPath = System.getProperty("config", "src/main/resources/mongodb.ini");
-            String pFilter = System.getProperty("filter", "{}");
-            int pScale = Integer.parseInt(System.getProperty("scale", "8"));
-
-            String pOutput = System.getProperty("output", "/storage/projects/stoeckel/syntactic-language-change/mdd/");
-            boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
-            CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
-
-            boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "false"));
-
             MongoDBConfig mongoDbConfig = new MongoDBConfig(pMongoDbConfigPath);
             DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(new DUUIGerParCorReader(mongoDbConfig, pFilter));
 

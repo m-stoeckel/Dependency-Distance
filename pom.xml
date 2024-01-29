@@ -43,6 +43,7 @@
                         --illegal-access=permit
                         -Dorg.apache.uima.logger.class=org.texttechnologylab.utilities.uima.util.Log4j2Logger_impl
                     </argLine>
+                    <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
                 </configuration>
             </plugin>
             <plugin>

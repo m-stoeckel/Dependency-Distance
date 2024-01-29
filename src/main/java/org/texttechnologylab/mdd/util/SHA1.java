@@ -1,9 +1,9 @@
-package org.texttechnologylab.mdd;
+package org.texttechnologylab.mdd.util;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Util {
+public class SHA1 {
 
     private static final MessageDigest SHA_1_DIGEST;
 
