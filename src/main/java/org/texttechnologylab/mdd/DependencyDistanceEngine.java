@@ -133,22 +133,18 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 documentDataPoint.add(dataPoint);
             }
 
-            try {
-                MessageDigest digest = MessageDigest.getInstance("SHA-1");
-                digest.update(documentMetaData.getDocumentUri().getBytes(StandardCharsets.UTF_8));
-                digest.update(documentMetaData.getDocumentId().getBytes(StandardCharsets.UTF_8));
-                digest.update(documentMetaData.getDocumentTitle().getBytes(StandardCharsets.UTF_8));
-                String metaHash = Hex.encodeHexString(digest.digest());
+            MessageDigest digest = Util.getSha1Digest();
+            digest.update(documentMetaData.getDocumentUri().getBytes(StandardCharsets.UTF_8));
+            digest.update(documentMetaData.getDocumentId().getBytes(StandardCharsets.UTF_8));
+            digest.update(documentMetaData.getDocumentTitle().getBytes(StandardCharsets.UTF_8));
+            String metaHash = Hex.encodeHexString(digest.digest());
 
-                String json = new Gson().toJson(documentDataPoint);
-                try (BufferedWriter writer = Files.newWriter(outputFile, StandardCharsets.UTF_8)) {
-                    writer.write(json);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } catch (NoSuchAlgorithmException e) {
-                throw new RuntimeException(e);
+            String json = new Gson().toJson(documentDataPoint);
             File outputFile = Path.of(this.pOutputPath, metaHash + ".json").toFile();
+            try (BufferedWriter writer = Files.newWriter(outputFile, StandardCharsets.UTF_8)) {
+                writer.write(json);
+            } catch (IOException e) {
+                throw new AnalysisEngineProcessException(e);
             }
         } catch (IllegalArgumentException e) {
             this.logger.error(Arrays.toString(e.getStackTrace()));
