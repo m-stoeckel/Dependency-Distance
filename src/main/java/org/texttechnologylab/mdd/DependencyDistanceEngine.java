@@ -54,9 +54,9 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     @Override
     public void process(JCas jCas) throws AnalysisEngineProcessException {
         try {
-            DocumentAnnotation meta = JCasUtil.selectSingle(jCas, DocumentAnnotation.class);
-            DocumentMetaData metadata = JCasUtil.selectSingle(jCas, DocumentMetaData.class);
-            DocumentDataPoint documentDataPoint = new DocumentDataPoint(meta);
+            DocumentAnnotation documentAnnotation = JCasUtil.selectSingle(jCas, DocumentAnnotation.class);
+            DocumentMetaData documentMetaData = JCasUtil.selectSingle(jCas, DocumentMetaData.class);
+            DocumentDataPoint documentDataPoint = new DocumentDataPoint(documentAnnotation, documentMetaData);
 
             ArrayList<Sentence> sentences = new ArrayList<Sentence>(new ArrayList<>(JCasUtil.select(jCas, Sentence.class)));
             HashMap<Sentence, Collection<Token>> tokenMap = new HashMap<Sentence, Collection<Token>>(JCasUtil.indexCovered(jCas, Sentence.class, Token.class));
@@ -129,9 +129,9 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
             try {
                 MessageDigest digest = MessageDigest.getInstance("SHA-1");
-                digest.update(metadata.getDocumentUri().getBytes(StandardCharsets.UTF_8));
-                digest.update(metadata.getDocumentId().getBytes(StandardCharsets.UTF_8));
-                digest.update(metadata.getDocumentTitle().getBytes(StandardCharsets.UTF_8));
+                digest.update(documentMetaData.getDocumentUri().getBytes(StandardCharsets.UTF_8));
+                digest.update(documentMetaData.getDocumentId().getBytes(StandardCharsets.UTF_8));
+                digest.update(documentMetaData.getDocumentTitle().getBytes(StandardCharsets.UTF_8));
                 String metaHash = Hex.encodeHexString(digest.digest());
 
                 String json = new Gson().toJson(documentDataPoint);
@@ -179,10 +179,16 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         Integer dateYear;
         Long timestamp;
         String place;
+
+        String documentUri;
+
+        String documentTitle;
+
+        String documentId;
+
         ArrayList<SentenceDataPoint> sentences;
 
-        public DocumentDataPoint(DocumentAnnotation documentAnnotation) {
-            this.sentences = new ArrayList<>();
+        public DocumentDataPoint(DocumentAnnotation documentAnnotation, DocumentMetaData documentMetaData) {
             this.author = documentAnnotation.getAuthor();
             this.publisher = documentAnnotation.getPublisher();
             this.dateDay = documentAnnotation.getDateDay();
@@ -191,6 +197,12 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
             this.dateYear = documentAnnotation.getDateYear();
             this.timestamp = documentAnnotation.getTimestamp();
             this.place = documentAnnotation.getPlace();
+
+            this.documentUri = documentMetaData.getDocumentUri();
+            this.documentTitle = documentMetaData.getDocumentTitle();
+            this.documentId = documentMetaData.getDocumentId();
+
+            this.sentences = new ArrayList<>();
         }
 
         public void add(SentenceDataPoint dataPoint) {
