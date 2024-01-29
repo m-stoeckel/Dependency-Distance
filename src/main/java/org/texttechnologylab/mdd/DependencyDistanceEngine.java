@@ -12,6 +12,8 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
+import org.apache.uima.cas.CASRuntimeException;
+import org.apache.uima.cas.Feature;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.internal.ExtendedLogger;
 import org.apache.uima.fit.util.JCasUtil;
@@ -152,7 +154,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     private static class SentenceDataPoint {
         int rootDistance;
         int numberOfSyntacticLinks;
-        ArrayList<Integer> dependencyDistances;
+        List<Integer> dependencyDistances;
 
         public SentenceDataPoint(int rootDistance, int numberOfSyntacticLinks) {
             this.rootDistance = rootDistance;
@@ -171,37 +173,27 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     }
 
     private class DocumentDataPoint {
-        String author;
-        String publisher;
-        Integer dateDay;
-        String subtitle;
-        Integer dateMonth;
-        Integer dateYear;
-        Long timestamp;
-        String place;
-
-        String documentUri;
-
-        String documentTitle;
-
-        String documentId;
-
-        ArrayList<SentenceDataPoint> sentences;
+        Map<String, String> documentAnnotation;
+        Map<String, String> documentMetaData;
+        List<SentenceDataPoint> sentences;
 
         public DocumentDataPoint(DocumentAnnotation documentAnnotation, DocumentMetaData documentMetaData) {
-            this.author = documentAnnotation.getAuthor();
-            this.publisher = documentAnnotation.getPublisher();
-            this.dateDay = documentAnnotation.getDateDay();
-            this.subtitle = documentAnnotation.getSubtitle();
-            this.dateMonth = documentAnnotation.getDateMonth();
-            this.dateYear = documentAnnotation.getDateYear();
-            this.timestamp = documentAnnotation.getTimestamp();
-            this.place = documentAnnotation.getPlace();
-
-            this.documentUri = documentMetaData.getDocumentUri();
-            this.documentTitle = documentMetaData.getDocumentTitle();
-            this.documentId = documentMetaData.getDocumentId();
-
+            this.documentAnnotation = new TreeMap<>();
+            for (Feature feature : documentAnnotation.getType().getFeatures()) {
+                try {
+                    this.documentAnnotation.put(feature.getShortName(), documentAnnotation.getFeatureValueAsString(feature));
+                } catch (CASRuntimeException e) {
+                    logger.debug(e.toString());
+                }
+            }
+            this.documentMetaData = new TreeMap<>();
+            for (Feature feature : documentMetaData.getType().getFeatures()) {
+                try {
+                    this.documentMetaData.put(feature.getShortName(), documentMetaData.getFeatureValueAsString(feature));
+                } catch (CASRuntimeException e) {
+                    logger.debug(e.toString());
+                }
+            }
             this.sentences = new ArrayList<>();
         }
 
