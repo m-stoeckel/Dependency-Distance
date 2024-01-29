@@ -8,6 +8,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
+import io.azam.ulidj.ULID;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.cas.CASRuntimeException;
@@ -173,7 +174,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 this.documentMetaData.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
                 this.documentAnnotation.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
-                String metaHash = Hex.encodeHexString(digest.digest());
+                String metaHash = Hex.encodeHexString(digest.digest()) + "-" + ULID.random();
 
                 try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(getOutputStream(metaHash, ".json"), StandardCharsets.UTF_8))) {
                     String json = new Gson().toJson(this);

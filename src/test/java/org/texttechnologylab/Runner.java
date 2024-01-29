@@ -38,7 +38,7 @@ public class Runner {
             boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 
-            boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "false"));
+            boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "true"));
 
             MongoDBConfig mongoDbConfig = new MongoDBConfig(pMongoDbConfigPath);
             DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(new DUUIGerParCorReader(mongoDbConfig, pFilter));
@@ -78,6 +78,7 @@ public class Runner {
     public void GerParCorFile() {
         try {
             String pInput = System.getProperty("input");
+            pInput = "/storage/xmi/GerParCorDownload/Germany/National/Bundestag/";
             if (Objects.isNull(pInput)) {
                 throw new IllegalArgumentException("-Dinput must be given!");
             }
@@ -87,6 +88,7 @@ public class Runner {
             int pPoolsize = Integer.parseInt(System.getProperty("poolsize", "16"));
 
             String pOutput = System.getProperty("output", "/tmp/mdd/");
+            pOutput = "/storage/projects/stoeckel/syntactic-language-change/mdd/";
             boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 
