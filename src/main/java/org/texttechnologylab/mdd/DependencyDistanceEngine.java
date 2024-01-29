@@ -33,9 +33,13 @@ import java.util.*;
 
 public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
-    public static final String PARAM_OUTPUT = "outputPath";
+    public static final String PARAM_OUTPUT = "pOutputPath";
     @ConfigurationParameter(name = PARAM_OUTPUT, mandatory = true)
-    protected String outputPath;
+    protected String pOutputPath;
+
+    public static final String PARAM_FAIL_ON_ERROR = "pFailOnError";
+    @ConfigurationParameter(name = PARAM_FAIL_ON_ERROR, mandatory = false, defaultValue = "false")
+    protected Boolean pFailOnError;
 
     protected ExtendedLogger logger;
 
@@ -45,11 +49,11 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         super.initialize(context);
         this.logger = getLogger();
 
-        File outputPath = Path.of(this.outputPath).toFile();
+        File outputPath = Path.of(this.pOutputPath).toFile();
         if (!outputPath.exists()) {
-            throw new ResourceInitializationException(new InvalidPathException(this.outputPath, "The given output path does not exist!"));
+            throw new ResourceInitializationException(new InvalidPathException(this.pOutputPath, "The given output path does not exist!"));
         } else if (!outputPath.isDirectory()) {
-            throw new ResourceInitializationException(new InvalidPathException(this.outputPath, "The given output path is not a directory!"));
+            throw new ResourceInitializationException(new InvalidPathException(this.pOutputPath, "The given output path is not a directory!"));
         }
     }
 
@@ -137,7 +141,6 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 String metaHash = Hex.encodeHexString(digest.digest());
 
                 String json = new Gson().toJson(documentDataPoint);
-                File outputFile = Path.of(this.outputPath, metaHash + ".json").toFile();
                 try (BufferedWriter writer = Files.newWriter(outputFile, StandardCharsets.UTF_8)) {
                     writer.write(json);
                 } catch (IOException e) {
@@ -145,9 +148,13 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 }
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
+            File outputFile = Path.of(this.pOutputPath, metaHash + ".json").toFile();
             }
         } catch (IllegalArgumentException e) {
             this.logger.error(Arrays.toString(e.getStackTrace()));
+            if (pFailOnError) {
+                throw new AnalysisEngineProcessException(e);
+            }
         }
     }
 
