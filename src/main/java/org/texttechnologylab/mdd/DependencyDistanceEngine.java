@@ -21,14 +21,11 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
@@ -133,21 +130,10 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 documentDataPoint.add(dataPoint);
             }
 
-            MessageDigest digest = Util.getSha1Digest();
-            digest.update(documentMetaData.getDocumentUri().getBytes(StandardCharsets.UTF_8));
-            digest.update(documentMetaData.getDocumentId().getBytes(StandardCharsets.UTF_8));
-            digest.update(documentMetaData.getDocumentTitle().getBytes(StandardCharsets.UTF_8));
-            String metaHash = Hex.encodeHexString(digest.digest());
-
-            String json = new Gson().toJson(documentDataPoint);
-            File outputFile = Path.of(this.pOutputPath, metaHash + ".json").toFile();
-            try (BufferedWriter writer = Files.newWriter(outputFile, StandardCharsets.UTF_8)) {
-                writer.write(json);
-            } catch (IOException e) {
-                throw new AnalysisEngineProcessException(e);
-            }
-        } catch (IllegalArgumentException e) {
-            this.logger.error(Arrays.toString(e.getStackTrace()));
+            documentDataPoint.save(this.pOutputPath);
+        } catch (Exception e) {
+            this.logger.error(e.getMessage());
+            e.printStackTrace();
             if (pFailOnError) {
                 throw new AnalysisEngineProcessException(e);
             }
@@ -202,6 +188,21 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
         public void add(SentenceDataPoint dataPoint) {
             this.sentences.add(dataPoint);
+        }
+
+        public void save(String path) throws IOException {
+            MessageDigest digest = Util.getSha1Digest();
+            this.documentMetaData.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
+            String metaHash = Hex.encodeHexString(digest.digest());
+
+            String json = new Gson().toJson(this);
+
+            File outputFile = Path.of(path, metaHash + ".json").toFile();
+
+            logger.info(String.format("Writing DocumentDataPoint to %s", outputFile.getAbsolutePath()));
+            try (BufferedWriter writer = Files.newWriter(outputFile, StandardCharsets.UTF_8)) {
+                writer.write(json);
+            }
         }
     }
 }
