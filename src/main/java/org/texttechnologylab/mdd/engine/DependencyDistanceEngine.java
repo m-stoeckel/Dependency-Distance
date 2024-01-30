@@ -49,6 +49,8 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
             save(documentDataPoint, outputStream);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
+        } catch (IOException e) {
+            getLogger().error(e.getMessage());
         } catch (Exception e) {
             getLogger().error(e.getMessage());
             e.printStackTrace();
