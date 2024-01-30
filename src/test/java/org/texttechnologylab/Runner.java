@@ -40,6 +40,19 @@ public class Runner {
 
             boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "true"));
 
+            System.out.printf(
+                    "Settings:\n" +
+                            "  pMongoDbConfigPath: %s\n" +
+                            "  pFilter: %s\n" +
+                            "  pScale: %d\n" +
+                            "  pPoolsize: %d\n" +
+                            "  pOutput: %s\n" +
+                            "  pOverwrite: %b\n" +
+                            "  pCompression: %s\n" +
+                            "  pFailOnError: %b\n",
+                    pMongoDbConfigPath, pFilter, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError
+            );
+
             MongoDBConfig mongoDbConfig = new MongoDBConfig(pMongoDbConfigPath);
             DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(new DUUIGerParCorReader(mongoDbConfig, pFilter));
 
@@ -78,7 +91,7 @@ public class Runner {
     public void GerParCorFile() {
         try {
             String pInput = System.getProperty("input");
-            pInput = "/storage/xmi/GerParCorDownload/Germany/National/Bundestag/";
+//            pInput = "/storage/xmi/GerParCorDownload/Germany/National/Bundestag/";
             if (Objects.isNull(pInput)) {
                 throw new IllegalArgumentException("-Dinput must be given!");
             }
@@ -88,11 +101,23 @@ public class Runner {
             int pPoolsize = Integer.parseInt(System.getProperty("poolsize", "16"));
 
             String pOutput = System.getProperty("output", "/tmp/mdd/");
-            pOutput = "/storage/projects/stoeckel/syntactic-language-change/mdd/";
+//            pOutput = "/storage/projects/stoeckel/syntactic-language-change/mdd/";
             boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 
             boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "true"));
+
+            System.out.printf(
+                    "Settings:\n" +
+                            "  pInput: %s\n" +
+                            "  pScale: %d\n" +
+                            "  pPoolsize: %d\n" +
+                            "  pOutput: %s\n" +
+                            "  pOverwrite: %b\n" +
+                            "  pCompression: %s\n" +
+                            "  pFailOnError: %b\n",
+                    pInput, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError
+            );
 
             List<Path> children = Files.list(Path.of(pInput)).map(Path::toFile).filter(File::isDirectory).map(File::toPath).collect(Collectors.toList());
 
