@@ -13,12 +13,12 @@ import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.tcas.Annotation;
-import org.jetbrains.annotations.NotNull;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
 import org.texttechnologylab.mdd.data.SentenceDataPoint;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
@@ -37,8 +37,18 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     @Override
     public void process(JCas jCas) throws AnalysisEngineProcessException {
         try {
-            DocumentDataPoint documentDataPoint = processCas(jCas);
-            save(documentDataPoint);
+            final DocumentDataPoint documentDataPoint = DocumentDataPoint.fromJCas(jCas);
+
+            String metaHash = documentDataPoint.getMetaHash();
+            if (pUlidSuffix) metaHash += "-" + ULID.random();
+
+            NamedOutputStream outputStream = getOutputStream(metaHash, ".json");
+
+            processDocument(jCas, documentDataPoint);
+
+            save(documentDataPoint, outputStream);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
         } catch (Exception e) {
             getLogger().error(e.getMessage());
             e.printStackTrace();
@@ -48,10 +58,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         }
     }
 
-    @NotNull
-    protected DocumentDataPoint processCas(JCas jCas) {
-        final DocumentDataPoint documentDataPoint = DocumentDataPoint.fromJCas(jCas);
-
+    protected void processDocument(JCas jCas, final DocumentDataPoint documentDataPoint) {
         final ArrayList<Sentence> sentences = new ArrayList<>(new ArrayList<>(JCasUtil.select(jCas, Sentence.class)));
         final HashMap<Sentence, Collection<Token>> tokenMap = new HashMap<>(JCasUtil.indexCovered(jCas, Sentence.class, Token.class));
         final HashMap<Sentence, Collection<Dependency>> dependencyMap = new HashMap<>(JCasUtil.indexCovered(jCas, Sentence.class, Dependency.class));
@@ -65,10 +72,8 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 continue;
             }
 
-            SentenceDataPoint sentenceDataPoint = processDependencies(new ArrayList<>(dependencyMap.get(sentence)));
-            documentDataPoint.add(sentenceDataPoint);
+            documentDataPoint.add(processDependencies(new ArrayList<>(dependencyMap.get(sentence))));
         }
-        return documentDataPoint;
     }
 
     private boolean sentenceIsValid(Sentence sentence, HashMap<Sentence, Collection<Token>> tokenMap) {
@@ -92,11 +97,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
     private SentenceDataPoint processDependencies(final ArrayList<Dependency> dependencies) {
         dependencies.sort(Comparator.comparingInt(o -> o.getDependent().getBegin()));
-        ArrayList<Token> tokens = dependencies.stream()
-                .flatMap(d -> Arrays.stream(new Token[]{d.getGovernor(), d.getDependent()}))
-                .distinct()
-                .sorted(Comparator.comparingInt(Annotation::getBegin))
-                .collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<Token> tokens = dependencies.stream().flatMap(d -> Arrays.stream(new Token[]{d.getGovernor(), d.getDependent()})).distinct().sorted(Comparator.comparingInt(Annotation::getBegin)).collect(Collectors.toCollection(ArrayList::new));
 
 
         int rootDistance = -1;
@@ -124,18 +125,10 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         return sentenceDataPoint;
     }
 
-    protected void save(DocumentDataPoint dataPoints) throws IOException {
-        try {
-            String metaHash = dataPoints.getMetaHash();
-
-            if (pUlidSuffix) metaHash += "-" + ULID.random();
-
-            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(getOutputStream(metaHash, ".json"), StandardCharsets.UTF_8))) {
-                String json = new Gson().toJson(dataPoints);
-                writer.write(json);
-            }
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+    protected void save(DocumentDataPoint dataPoints, OutputStream outputStream) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
+            String json = new Gson().toJson(dataPoints);
+            writer.write(json);
         }
     }
 }

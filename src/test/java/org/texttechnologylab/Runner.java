@@ -119,13 +119,8 @@ public class Runner {
                     pInput, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError
             );
 
-            List<Path> children = Files.list(Path.of(pInput)).map(Path::toFile).filter(File::isDirectory).map(File::toPath).collect(Collectors.toList());
-
-            HashSet<DUUICollectionReader> readers = new HashSet<>();
-            for (Path child : children) {
-                readers.add(new DUUIFileReader(child.toString(), pEnding));
-            }
-            DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(readers);
+            DUUICollectionReader reader = new DUUIFileReader(pInput, pEnding);
+            DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(reader);
 
             DUUIComposer composer = new DUUIComposer()
                     .withSkipVerification(true)

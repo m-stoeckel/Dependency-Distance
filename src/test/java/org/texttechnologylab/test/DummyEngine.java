@@ -1,5 +1,6 @@
 package org.texttechnologylab.test;
 
+import io.azam.ulidj.ULID;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
@@ -11,9 +12,17 @@ public class DummyEngine extends DependencyDistanceEngine {
     @Override
     public void process(JCas jCas) throws AnalysisEngineProcessException {
         try {
-            DocumentDataPoint documentDataPoint = processCas(jCas);
+            final DocumentDataPoint documentDataPoint = DocumentDataPoint.fromJCas(jCas);
+
+            String metaHash = documentDataPoint.getMetaHash();
+            if (pUlidSuffix) metaHash += "-" + ULID.random();
+
+            NamedOutputStream outputStream = getOutputStream(metaHash, ".json");
+
+            processDocument(jCas, documentDataPoint);
             this.documentDataPoint = documentDataPoint;
-            save(documentDataPoint);
+
+            save(documentDataPoint, outputStream);
         } catch (Exception e) {
             getLogger().error(e.getMessage());
             e.printStackTrace();
