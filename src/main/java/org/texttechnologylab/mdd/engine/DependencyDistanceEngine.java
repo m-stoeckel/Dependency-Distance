@@ -2,30 +2,28 @@ package org.texttechnologylab.mdd.engine;
 
 import com.google.gson.Gson;
 import de.tudarmstadt.ukp.dkpro.core.api.io.JCasFileWriter_ImplBase;
-import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
 import io.azam.ulidj.ULID;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
-import org.apache.uima.cas.CASRuntimeException;
-import org.apache.uima.cas.Feature;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.tcas.Annotation;
 import org.jetbrains.annotations.NotNull;
-import org.texttechnologylab.annotation.DocumentAnnotation;
+import org.texttechnologylab.mdd.data.DocumentDataPoint;
+import org.texttechnologylab.mdd.data.SentenceDataPoint;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     public static final String PARAM_FAIL_ON_ERROR = "pFailOnError";
@@ -39,8 +37,8 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     @Override
     public void process(JCas jCas) throws AnalysisEngineProcessException {
         try {
-            DocumentDataPoints documentDataPoints = processCas(jCas);
-            save(documentDataPoints);
+            DocumentDataPoint documentDataPoint = processCas(jCas);
+            save(documentDataPoint);
         } catch (Exception e) {
             getLogger().error(e.getMessage());
             e.printStackTrace();
@@ -51,8 +49,8 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     }
 
     @NotNull
-    protected DocumentDataPoints processCas(JCas jCas) {
-        final DocumentDataPoints documentDataPoints = DocumentDataPoints.fromJCas(jCas);
+    protected DocumentDataPoint processCas(JCas jCas) {
+        final DocumentDataPoint documentDataPoint = DocumentDataPoint.fromJCas(jCas);
 
         final ArrayList<Sentence> sentences = new ArrayList<>(new ArrayList<>(JCasUtil.select(jCas, Sentence.class)));
         final HashMap<Sentence, Collection<Token>> tokenMap = new HashMap<>(JCasUtil.indexCovered(jCas, Sentence.class, Token.class));
@@ -67,10 +65,10 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 continue;
             }
 
-            DataPoint dataPoint = processDependencies(dependencies);
-            documentDataPoints.add(dataPoint);
+            SentenceDataPoint sentenceDataPoint = processDependencies(new ArrayList<>(dependencyMap.get(sentence)));
+            documentDataPoint.add(sentenceDataPoint);
         }
-        return documentDataPoints;
+        return documentDataPoint;
     }
 
     private boolean sentenceIsValid(Sentence sentence, HashMap<Sentence, Collection<Token>> tokenMap) {
@@ -92,53 +90,42 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         return true;
     }
 
-    private DataPoint processDependencies(final Collection<Dependency> dependencies) {
-        TreeMap<Integer, Token> tokenBeginMap = new TreeMap<>();
-        int numberOfSyntacticLinks = 0;
+    private SentenceDataPoint processDependencies(final ArrayList<Dependency> dependencies) {
+        dependencies.sort(Comparator.comparingInt(o -> o.getDependent().getBegin()));
+        ArrayList<Token> tokens = dependencies.stream()
+                .flatMap(d -> Arrays.stream(new Token[]{d.getGovernor(), d.getDependent()}))
+                .distinct()
+                .sorted(Comparator.comparingInt(Annotation::getBegin))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+
         int rootDistance = -1;
+        int numberOfSyntacticLinks = 0;
+        SentenceDataPoint sentenceDataPoint = new SentenceDataPoint();
         for (Dependency dependency : dependencies) {
+            if (dependency instanceof PUNCT || dependency.getDependencyType().equalsIgnoreCase("PUNCT")) {
+                continue;
+            }
+
+            numberOfSyntacticLinks++;
+
             if (dependency instanceof ROOT) {
-                rootDistance = numberOfSyntacticLinks + 1;
+                rootDistance = numberOfSyntacticLinks;
                 continue;
             }
-            if (dependency instanceof PUNCT) {
-                continue;
-            }
-            numberOfSyntacticLinks += 1;
 
-            Token governor = dependency.getGovernor();
-            tokenBeginMap.put(governor.getBegin(), governor);
-            Token dependent = dependency.getDependent();
-            tokenBeginMap.put(dependent.getBegin(), dependent);
+            int dist = Math.abs(tokens.indexOf(dependency.getGovernor()) - tokens.indexOf(dependency.getDependent()));
+
+            sentenceDataPoint.add(dist);
         }
-
-        DataPoint dataPoint = new DataPoint(rootDistance, numberOfSyntacticLinks);
-        for (Dependency dependency : dependencies) {
-            if (dependency instanceof ROOT) {
-                continue;
-            }
-            if (dependency instanceof PUNCT) {
-                continue;
-            }
-
-            Token governor = dependency.getGovernor();
-            Token dependent = dependency.getDependent();
-
-            int governorTailSize = tokenBeginMap.tailMap(governor.getBegin()).size();
-            int dependentTailSize = tokenBeginMap.tailMap(dependent.getBegin()).size();
-            int dist = Math.abs(governorTailSize - dependentTailSize);
-
-            dataPoint.add(dist);
-        }
-        return dataPoint;
+        sentenceDataPoint.rootDistance = rootDistance;
+        sentenceDataPoint.numberOfSyntacticLinks = numberOfSyntacticLinks;
+        return sentenceDataPoint;
     }
 
-    protected void save(DocumentDataPoints dataPoints) throws IOException {
+    protected void save(DocumentDataPoint dataPoints) throws IOException {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            dataPoints.documentMetaData.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
-            dataPoints.documentAnnotation.forEach((k, v) -> digest.update(v.getBytes(StandardCharsets.UTF_8)));
-            String metaHash = Hex.encodeHexString(digest.digest());
+            String metaHash = dataPoints.getMetaHash();
 
             if (pUlidSuffix) metaHash += "-" + ULID.random();
 
@@ -148,65 +135,6 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
             }
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    protected static class DataPoint {
-        protected final int rootDistance;
-        protected final int numberOfSyntacticLinks;
-        protected final List<Integer> dependencyDistances;
-
-        public DataPoint(int rootDistance, int numberOfSyntacticLinks) {
-            this.rootDistance = rootDistance;
-            this.numberOfSyntacticLinks = numberOfSyntacticLinks;
-            this.dependencyDistances = new ArrayList<>();
-        }
-
-        public void add(int distance) {
-            this.dependencyDistances.add(distance);
-        }
-
-        public float mdd() {
-            float mDD = (float) this.dependencyDistances.stream().reduce(0, Integer::sum);
-            return mDD / (float) this.numberOfSyntacticLinks;
-        }
-    }
-
-    protected static class DocumentDataPoints {
-        protected final Map<String, String> documentAnnotation;
-        protected final Map<String, String> documentMetaData;
-        protected final List<DataPoint> sentences;
-
-        public DocumentDataPoints(DocumentAnnotation documentAnnotation, DocumentMetaData documentMetaData) {
-            this.documentAnnotation = new TreeMap<>();
-            for (Feature feature : documentAnnotation.getType().getFeatures()) {
-                try {
-                    String featureValueAsString = documentAnnotation.getFeatureValueAsString(feature);
-                    if (Objects.nonNull(featureValueAsString))
-                        this.documentAnnotation.put(feature.getShortName(), featureValueAsString);
-                } catch (CASRuntimeException ignored) {
-                }
-            }
-            this.documentMetaData = new TreeMap<>();
-            for (Feature feature : documentMetaData.getType().getFeatures()) {
-                try {
-                    String featureValueAsString = documentMetaData.getFeatureValueAsString(feature);
-                    if (Objects.nonNull(featureValueAsString))
-                        this.documentMetaData.put(feature.getShortName(), featureValueAsString);
-                } catch (CASRuntimeException ignored) {
-                }
-            }
-            this.sentences = new ArrayList<>();
-        }
-
-        public static DocumentDataPoints fromJCas(JCas jCas) {
-            DocumentAnnotation documentAnnotation = JCasUtil.selectSingle(jCas, DocumentAnnotation.class);
-            DocumentMetaData documentMetaData = JCasUtil.selectSingle(jCas, DocumentMetaData.class);
-            return new DocumentDataPoints(documentAnnotation, documentMetaData);
-        }
-
-        public void add(DataPoint dataPoint) {
-            this.sentences.add(dataPoint);
         }
     }
 }
