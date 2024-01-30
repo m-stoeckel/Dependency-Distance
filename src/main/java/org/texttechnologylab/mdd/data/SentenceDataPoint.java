@@ -17,9 +17,9 @@ public class SentenceDataPoint {
         this.dependencyDistances.add(distance);
     }
 
-    public float mdd() {
-        float mDD = (float) this.dependencyDistances.stream().reduce(0, Integer::sum);
-        return mDD / (float) this.numberOfSyntacticLinks;
+    public double mdd() {
+        double mDD = (double) this.dependencyDistances.stream().reduce(0, Integer::sum);
+        return mDD / (double) this.dependencyDistances.size();
     }
 
     public int getRootDistance() {

@@ -103,18 +103,19 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         int numberOfSyntacticLinks = 0;
         SentenceDataPoint sentenceDataPoint = new SentenceDataPoint();
         for (Dependency dependency : dependencies) {
-            if (dependency instanceof PUNCT || dependency.getDependencyType().equalsIgnoreCase("PUNCT")) {
+            numberOfSyntacticLinks++;
+            String dependencyType = dependency.getDependencyType();
+            if (dependency instanceof PUNCT || dependencyType.equalsIgnoreCase("PUNCT")) {
                 continue;
             }
-
-            numberOfSyntacticLinks++;
-
-            if (dependency instanceof ROOT) {
+            Token governor = dependency.getGovernor();
+            Token dependent = dependency.getDependent();
+            if (dependency instanceof ROOT || governor == dependent || dependencyType.equalsIgnoreCase("ROOT")) {
                 rootDistance = numberOfSyntacticLinks;
                 continue;
             }
 
-            int dist = Math.abs(tokens.indexOf(dependency.getGovernor()) - tokens.indexOf(dependency.getDependent()));
+            int dist = Math.abs(tokens.indexOf(governor) - tokens.indexOf(dependent));
 
             sentenceDataPoint.add(dist);
         }
