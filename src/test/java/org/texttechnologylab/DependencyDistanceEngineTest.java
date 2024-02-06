@@ -13,7 +13,6 @@ import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
-import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
@@ -24,7 +23,6 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
 import org.texttechnologylab.mdd.data.EdgeDataPoint;
-import org.texttechnologylab.mdd.data.SentenceDataPoint;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 import org.texttechnologylab.engine.DummyEngine;
 
