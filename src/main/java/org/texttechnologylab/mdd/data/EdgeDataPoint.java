@@ -15,7 +15,7 @@ public class EdgeDataPoint extends SentenceDataPoint {
     }
 
     public int getDependencyDistanceSum() {
-        return this.dependencyDistances.stream().reduce(0, Integer::sum);
+        return this.dependencyDistances.stream().reduce(0, (a, b) -> a + b);
     }
 
     public int getSentenceLength() {
