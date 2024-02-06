@@ -144,7 +144,7 @@ public class DependencyDistanceEngineTest {
             AnalysisEngine engine = createEngine(
                     DummyEngine.class,
                     DummyEngine.PARAM_TARGET_LOCATION, pOutput,
-                    DummyEngine.PARAM_OVERWRITE, true,
+                    DummyEngine.PARAM_OVERWRITE, false,
                     DummyEngine.PARAM_COMPRESSION, CompressionMethod.NONE,
                     DummyEngine.PARAM_FAIL_ON_ERROR, true
             );

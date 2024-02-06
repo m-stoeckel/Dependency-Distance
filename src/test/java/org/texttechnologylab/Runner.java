@@ -31,7 +31,8 @@ public class Runner {
 
             String pOutput = System.getProperty("output", "/storage/projects/stoeckel/syntactic-language-change/mdd/");
             boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
-            CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
+            //     CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
+            CompressionMethod pCompression = CompressionMethod.NONE;
 
             boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "false"));
             boolean pMkDirs = Boolean.parseBoolean(System.getProperty("mkdirs", "true"));
@@ -102,7 +103,8 @@ public class Runner {
 
             String pOutput = System.getProperty("output", "/tmp/mdd/");
             boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
-            CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
+        //     CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
+            CompressionMethod pCompression = CompressionMethod.NONE;
 
             boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "false"));
             boolean pMkDirs = Boolean.parseBoolean(System.getProperty("mkdirs", "true"));
