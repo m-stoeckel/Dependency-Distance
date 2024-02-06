@@ -18,7 +18,11 @@ import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDesc
 
 public class Run {
     public static void main(String[] args) {
-        String pMongoDbConfigPath = System.getProperty("config", "src/main/resources/mongodb.ini");
+        String pMongoDbConfigPath = System.getProperty("config");
+        if (pMongoDbConfigPath == null || pMongoDbConfigPath.isEmpty()) {
+            throw new IllegalArgumentException("No MongoDB config file provided");
+        }
+        
         String pFilter = System.getProperty("filter", "{}");
         int pScale = Integer.parseInt(System.getProperty("scale", "8"));
 

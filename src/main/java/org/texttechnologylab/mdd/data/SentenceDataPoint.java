@@ -7,7 +7,7 @@ public class SentenceDataPoint {
 
     public int rootDistance = -1;
     public int numberOfSyntacticLinks = -1;
-    protected final List<Integer> dependencyDistances;
+    protected final ArrayList<Integer> dependencyDistances;
 
     public SentenceDataPoint() {
         this.dependencyDistances = new ArrayList<>();

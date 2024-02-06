@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,35 +37,68 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     public void process(JCas jCas) throws AnalysisEngineProcessException {
         try {
             final DocumentDataPoint documentDataPoint = DocumentDataPoint.fromJCas(jCas);
-
+            String dateYear = documentDataPoint.getDocumentAnnotation().getOrDefault("dateYear", "0000");
             String metaHash = documentDataPoint.getMetaHash();
-            if (pUlidSuffix) metaHash += "-" + ULID.random();
 
-            NamedOutputStream outputStream = getOutputStream(metaHash, ".json");
+            String outputFile = String.join("/", dateYear, metaHash);
+            if (pUlidSuffix) {
+                outputFile = String.join("-", outputFile, ULID.random());
+            }
 
-            processDocument(jCas, documentDataPoint);
+            try {
+                // Try to get the output stream _before_ processing the document
+                // as we will get an IOException if the target file already exists
+                NamedOutputStream outputStream = getOutputStream(outputFile, ".json");
 
-            save(documentDataPoint, outputStream);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            getLogger().error(e.getMessage());
-        } catch (Exception e) {
+                try {
+                    processDocument(jCas, documentDataPoint);
+                } catch (Exception e) {
+                    // Unexpected: processDocument() is pretty safe, so something bad happened
+                    throw new AnalysisEngineProcessException(
+                            "Error while processing the document. This should not happen!",
+                            null,
+                            e);
+                }
+
+                try {
+                    save(documentDataPoint, outputStream);
+                } catch (IOException e) {
+                    // Unexpected: We could not write to the output stream?
+                    throw new AnalysisEngineProcessException(
+                            "Could not save document data point to output stream.",
+                            null,
+                            e);
+                }
+            } catch (IOException e) {
+                // Expected: getOutputStream() failed, most likely because the target file
+                // already exists
+                getLogger().error(e.getMessage());
+                if (pFailOnError)
+                    throw new AnalysisEngineProcessException(e);
+            }
+        } catch (AnalysisEngineProcessException e) {
+            // Something unexpected happened or an execption was passed on because
+            // pFailOnError is true
             getLogger().error(e.getMessage());
             e.printStackTrace();
             if (pFailOnError) {
-                throw new AnalysisEngineProcessException(e);
+                throw e;
             }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
     protected void processDocument(JCas jCas, final DocumentDataPoint documentDataPoint) {
         final ArrayList<Sentence> sentences = new ArrayList<>(new ArrayList<>(JCasUtil.select(jCas, Sentence.class)));
-        final HashMap<Sentence, Collection<Token>> tokenMap = new HashMap<>(JCasUtil.indexCovered(jCas, Sentence.class, Token.class));
-        final HashMap<Sentence, Collection<Dependency>> dependencyMap = new HashMap<>(JCasUtil.indexCovered(jCas, Sentence.class, Dependency.class));
+        final HashMap<Sentence, Collection<Token>> tokenMap = new HashMap<>(
+                JCasUtil.indexCovered(jCas, Sentence.class, Token.class));
+        final HashMap<Sentence, Collection<Dependency>> dependencyMap = new HashMap<>(
+                JCasUtil.indexCovered(jCas, Sentence.class, Dependency.class));
 
         for (Sentence sentence : sentences) {
-            if (!sentenceIsValid(sentence, tokenMap)) continue;
+            if (!sentenceIsValid(sentence, tokenMap))
+                continue;
 
             final Collection<Dependency> dependencies = dependencyMap.get(sentence);
             if (dependencies == null || dependencies.size() < 2) {
@@ -99,8 +131,9 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
     private SentenceDataPoint processDependencies(final ArrayList<Dependency> dependencies) {
         dependencies.sort(Comparator.comparingInt(o -> o.getDependent().getBegin()));
-        ArrayList<Token> tokens = dependencies.stream().flatMap(d -> Arrays.stream(new Token[]{d.getGovernor(), d.getDependent()})).distinct().sorted(Comparator.comparingInt(Annotation::getBegin)).collect(Collectors.toCollection(ArrayList::new));
-
+        ArrayList<Token> tokens = dependencies.stream()
+                .flatMap(d -> Arrays.stream(new Token[] { d.getGovernor(), d.getDependent() })).distinct()
+                .sorted(Comparator.comparingInt(Annotation::getBegin)).collect(Collectors.toCollection(ArrayList::new));
 
         int rootDistance = -1;
         int numberOfSyntacticLinks = 0;
@@ -127,7 +160,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         return sentenceDataPoint;
     }
 
-    protected void save(DocumentDataPoint dataPoints, OutputStream outputStream) throws IOException {
+    protected static void save(DocumentDataPoint dataPoints, OutputStream outputStream) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
             String json = new Gson().toJson(dataPoints);
             writer.write(json);

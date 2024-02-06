@@ -25,7 +25,7 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
 import org.texttechnologylab.mdd.data.SentenceDataPoint;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
-import org.texttechnologylab.test.DummyEngine;
+import org.texttechnologylab.engine.DummyEngine;
 
 import java.lang.reflect.Field;
 import java.nio.file.Path;
@@ -188,7 +188,7 @@ public class DependencyDistanceEngineTest {
                         continue;
 
                     System.out.printf(
-                            "  %s, %d\t%s, %d\t%d\n",
+                            "  %-6s %d -> %-6s %d = %d\n",
                             dependent.getCoveredText(),
                             tokens.indexOf(dependent) + 1,
                             dep instanceof ROOT ? "ROOT" : governor.getCoveredText(),
