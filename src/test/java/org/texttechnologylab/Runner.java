@@ -39,6 +39,7 @@ public class Runner {
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 
             boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "true"));
+            boolean pMkDirs = Boolean.parseBoolean(System.getProperty("mkdirs", "true"));
 
             System.out.printf(
                     "Settings:\n" +
@@ -52,6 +53,11 @@ public class Runner {
                             "  pFailOnError: %b\n",
                     pMongoDbConfigPath, pFilter, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError
             );
+
+            Path outputPath = Path.of(pOutput);
+            if (!outputPath.toFile().exists() && pMkDirs) {
+                outputPath.toFile().mkdirs();
+            }
 
             MongoDBConfig mongoDbConfig = new MongoDBConfig(pMongoDbConfigPath);
             DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(new DUUIGerParCorReader(mongoDbConfig, pFilter));
@@ -106,6 +112,7 @@ public class Runner {
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 
             boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "true"));
+            boolean pMkDirs = Boolean.parseBoolean(System.getProperty("mkdirs", "true"));
 
             System.out.printf(
                     "Settings:\n" +
@@ -118,6 +125,11 @@ public class Runner {
                             "  pFailOnError: %b\n",
                     pInput, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError
             );
+
+            Path outputPath = Path.of(pOutput);
+            if (!outputPath.toFile().exists() && pMkDirs) {
+                outputPath.toFile().mkdirs();
+            }
 
             DUUICollectionReader reader = new DUUIFileReader(pInput, pEnding);
             DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(reader);
