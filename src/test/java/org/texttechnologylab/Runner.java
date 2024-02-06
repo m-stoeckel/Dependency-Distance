@@ -24,7 +24,7 @@ public class Runner {
     @Test
     public void GerParCor() {
         try {
-            String pMongoDbConfigPath = System.getProperty("config", "src/test/resources/mongodb.ini");
+            String pConfig = System.getProperty("config", "src/test/resources/mongodb.ini");
             String pFilter = System.getProperty("filter", "{}");
             int pScale = Integer.parseInt(System.getProperty("scale", "8"));
             int pPoolsize = Integer.parseInt(System.getProperty("poolsize", "16"));
@@ -34,26 +34,30 @@ public class Runner {
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 
             boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "false"));
+            boolean pFixDateYear = Boolean.parseBoolean(System.getProperty("fixDateYear", "true"));
             boolean pMkDirs = Boolean.parseBoolean(System.getProperty("mkdirs", "true"));
 
             System.out.printf(
                     "Settings:\n" +
-                            "  pMongoDbConfigPath: %s\n" +
-                            "  pFilter:            %s\n" +
-                            "  pScale:             %d\n" +
-                            "  pPoolsize:          %d\n" +
-                            "  pOutput:            %s\n" +
-                            "  pOverwrite:         %b\n" +
-                            "  pCompression:       %s\n" +
-                            "  pFailOnError:       %b\n",
-                    pMongoDbConfigPath, pFilter, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError);
+                            "  pConfig:      %s\n" +
+                            "  pFilter:      %s\n" +
+                            "  pScale:       %d\n" +
+                            "  pPoolsize:    %d\n" +
+                            "  pOutput:      %s\n" +
+                            "  pOverwrite:   %b\n" +
+                            "  pCompression: %s\n" +
+                            "  pFailOnError: %b\n" +
+                            "  pFixDateYear: %b\n" +
+                            "  pMkDirs:      %b\n",
+                    pConfig, pFilter, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError,
+                    pFixDateYear, pMkDirs);
 
             Path outputPath = Path.of(pOutput);
             if (!outputPath.toFile().exists() && pMkDirs) {
                 outputPath.toFile().mkdirs();
             }
 
-            MongoDBConfig mongoDbConfig = new MongoDBConfig(pMongoDbConfigPath);
+            MongoDBConfig mongoDbConfig = new MongoDBConfig(pConfig);
             System.out.printf("MongoDBConfig:\n  %s\n", mongoDbConfig);
 
             DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(
@@ -74,7 +78,8 @@ public class Runner {
                             DependencyDistanceEngine.PARAM_TARGET_LOCATION, pOutput,
                             DependencyDistanceEngine.PARAM_OVERWRITE, pOverwrite,
                             DependencyDistanceEngine.PARAM_COMPRESSION, pCompression,
-                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError))
+                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError,
+                            DependencyDistanceEngine.PARAM_FIX_DATE_YEAR, pFixDateYear))
                     .withScale(pScale).build();
             composer.add(dependency);
 
@@ -105,6 +110,7 @@ public class Runner {
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 
             boolean pFailOnError = Boolean.parseBoolean(System.getProperty("failOnError", "false"));
+            boolean pFixDateYear = Boolean.parseBoolean(System.getProperty("fixDateYear", "true"));
             boolean pMkDirs = Boolean.parseBoolean(System.getProperty("mkdirs", "true"));
 
             System.out.printf(
@@ -115,8 +121,10 @@ public class Runner {
                             "  pOutput:      %s\n" +
                             "  pOverwrite:   %b\n" +
                             "  pCompression: %s\n" +
-                            "  pFailOnError: %b\n",
-                    pInput, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError);
+                            "  pFailOnError: %b\n" +
+                            "  pFixDateYear: %b\n" +
+                            "  pMkDirs:      %b\n",
+                    pInput, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError, pFixDateYear, pMkDirs);
 
             Path outputPath = Path.of(pOutput);
             if (!outputPath.toFile().exists() && pMkDirs) {
@@ -141,7 +149,8 @@ public class Runner {
                             DependencyDistanceEngine.PARAM_TARGET_LOCATION, pOutput,
                             DependencyDistanceEngine.PARAM_OVERWRITE, pOverwrite,
                             DependencyDistanceEngine.PARAM_COMPRESSION, pCompression,
-                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError))
+                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError,
+                            DependencyDistanceEngine.PARAM_FIX_DATE_YEAR, pFixDateYear))
                     .withScale(pScale).build();
             composer.add(dependency);
 

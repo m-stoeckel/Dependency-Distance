@@ -33,11 +33,28 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
     @ConfigurationParameter(name = PARAM_ULID_SUFFIX, mandatory = false, defaultValue = "false")
     protected Boolean pUlidSuffix;
 
+    public static final String PARAM_FIX_DATE_YEAR = "pFixDateYear";
+    @ConfigurationParameter(name = PARAM_FIX_DATE_YEAR, mandatory = false, defaultValue = "true")
+    protected Boolean pFixDateYear;
+
     @Override
     public void process(JCas jCas) throws AnalysisEngineProcessException {
         try {
             final DocumentDataPoint documentDataPoint = DocumentDataPoint.fromJCas(jCas);
+
             String dateYear = documentDataPoint.getDocumentAnnotation().getOrDefault("dateYear", "0000");
+            if (pFixDateYear) {
+                try {
+                    int iDateYear = Integer.parseInt(dateYear);
+                    dateYear = (iDateYear > 0 && iDateYear < 200) ? String.valueOf(iDateYear + 1900) : dateYear;
+                    documentDataPoint.getDocumentAnnotation().put("dateYear", dateYear);
+                } catch (NumberFormatException e) {
+                    getLogger().error(String.format("Could not parse dateYear '%s': %s", dateYear, e.getMessage()));
+                    if (pFailOnError)
+                        throw new AnalysisEngineProcessException(e);
+                }
+            }
+
             String metaHash = documentDataPoint.getMetaHash();
 
             String outputFile = String.join("/", dateYear, metaHash);

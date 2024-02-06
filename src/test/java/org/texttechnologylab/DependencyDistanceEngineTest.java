@@ -68,9 +68,8 @@ public class DependencyDistanceEngineTest {
                             DependencyDistanceEngine.class,
                             DependencyDistanceEngine.PARAM_TARGET_LOCATION, pOutput,
                             DependencyDistanceEngine.PARAM_OVERWRITE, true,
-                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError
-                    )
-            ).withScale(pScale).build();
+                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError))
+                    .withScale(pScale).build();
 
             composer.add(dependency);
             composer.run(processor, "mDD");
@@ -113,9 +112,8 @@ public class DependencyDistanceEngineTest {
                             DependencyDistanceEngine.PARAM_TARGET_LOCATION, pOutput,
                             DependencyDistanceEngine.PARAM_OVERWRITE, true,
                             DependencyDistanceEngine.PARAM_COMPRESSION, CompressionMethod.BZIP2,
-                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError
-                    )
-            ).withScale(pScale).build();
+                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError))
+                    .withScale(pScale).build();
 
             composer.add(dependency);
             composer.run(processor, "mDD");
@@ -128,27 +126,24 @@ public class DependencyDistanceEngineTest {
         }
     }
 
-
     @Test
     public void testWithValue() {
         try {
             String pOutput = System.getProperty("output", "target/output/");
 
-            TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory.createTypeSystemDescriptionFromPath(
-                    "src/test/resources/TypeSystem.xml"
-            );
+            TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory
+                    .createTypeSystemDescriptionFromPath(
+                            "src/test/resources/TypeSystem.xml");
             JCas jCas = JCasFactory.createJCas(
                     "src/test/resources/test.xmi",
-                    typeSystemDescription
-            );
+                    typeSystemDescription);
 
             AnalysisEngine engine = createEngine(
                     DummyEngine.class,
                     DummyEngine.PARAM_TARGET_LOCATION, pOutput,
                     DummyEngine.PARAM_OVERWRITE, true,
                     DummyEngine.PARAM_COMPRESSION, CompressionMethod.NONE,
-                    DummyEngine.PARAM_FAIL_ON_ERROR, true
-            );
+                    DummyEngine.PARAM_FAIL_ON_ERROR, true);
 
             engine.process(jCas);
 
@@ -173,7 +168,8 @@ public class DependencyDistanceEngineTest {
                 ArrayList<Token> tokens = new ArrayList<>(JCasUtil.select(jCas, Token.class));
                 for (int i = 0; i < tokens.size() - 1; i++) {
                     Token token = tokens.get(i);
-                    System.out.printf("  %d: '%s' (%d, %d)\n", i, token.getCoveredText(), token.getBegin(), token.getEnd());
+                    System.out.printf("  %d: '%s' (%d, %d)\n", i, token.getCoveredText(), token.getBegin(),
+                            token.getEnd());
                 }
 
                 ArrayList<Dependency> dependencies = new ArrayList<>(JCasUtil.select(jCas, Dependency.class));
@@ -194,12 +190,11 @@ public class DependencyDistanceEngineTest {
                             tokens.indexOf(dependent) + 1,
                             dep instanceof ROOT ? "ROOT" : governor.getCoveredText(),
                             tokens.indexOf(governor) + 1,
-                            dep instanceof ROOT ? 0 : dependencyDistances.get(counter++)
-                    );
+                            dep instanceof ROOT ? 0 : dependencyDistances.get(counter++));
                 }
 
                 Assertions.assertEquals(expectedDistances, dependencyDistances);
-                Assertions.assertEquals(expectedSentenceLength, sentenceDataPoint.getDependencyDistances().size());
+                Assertions.assertEquals(expectedSentenceLength, sentenceDataPoint.getSentenceLength());
                 Assertions.assertEquals(expectedNumberOfSyntacticLinks, sentenceDataPoint.numberOfSyntacticLinks);
                 Assertions.assertEquals(expectedRootDistance, sentenceDataPoint.rootDistance);
                 Assertions.assertEquals(expectedMDD, sentenceDataPoint.mdd());
