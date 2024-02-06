@@ -1,6 +1,5 @@
 package org.texttechnologylab;
 
-import com.google.common.collect.ImmutableList;
 import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
@@ -14,6 +13,7 @@ import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
+import org.assertj.core.util.Arrays;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
@@ -78,7 +78,7 @@ public class DependencyDistanceEngineTest {
             Assertions.assertTrue(true);
         } catch (Exception e) {
             e.printStackTrace();
-            Assertions.fail();
+            throw new RuntimeException(e);
         }
     }
 
@@ -122,7 +122,7 @@ public class DependencyDistanceEngineTest {
             Assertions.assertTrue(true);
         } catch (Exception e) {
             e.printStackTrace();
-            Assertions.fail();
+            throw new RuntimeException(e);
         }
     }
 
@@ -147,7 +147,7 @@ public class DependencyDistanceEngineTest {
 
             engine.process(jCas);
 
-            final ImmutableList<Integer> expectedDistances = ImmutableList.of(3, 2, 1, 1, 3, 2, 1, 4);
+            final List<Integer> expectedDistances = List.of(3, 2, 1, 1, 3, 2, 1, 4);
             final int expectedNumberOfSyntacticLinks = 10;
             final int expectedSentenceLength = 8;
             final int expectedRootDistance = 5;
