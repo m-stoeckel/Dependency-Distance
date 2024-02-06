@@ -23,6 +23,7 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.io.DUUIAsynchronousProce
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
+import org.texttechnologylab.mdd.data.EdgeDataPoint;
 import org.texttechnologylab.mdd.data.SentenceDataPoint;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 import org.texttechnologylab.engine.DummyEngine;
@@ -165,7 +166,7 @@ public class DependencyDistanceEngineTest {
                 DummyEngine dummyEngine = (DummyEngine) component;
 
                 DocumentDataPoint documentDataPoint = dummyEngine.documentDataPoint;
-                SentenceDataPoint sentenceDataPoint = documentDataPoint.getSentences().get(0);
+                EdgeDataPoint sentenceDataPoint = (EdgeDataPoint) documentDataPoint.getSentences().get(0);
                 List<Integer> dependencyDistances = sentenceDataPoint.getDependencyDistances();
 
                 System.out.println("Tokens:");

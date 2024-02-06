@@ -1,25 +1,19 @@
 package org.texttechnologylab.mdd.data;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class SentenceDataPoint {
 
     public int rootDistance = -1;
-    public int numberOfSyntacticLinks = -1;
-    protected final ArrayList<Integer> dependencyDistances;
-
-    public SentenceDataPoint() {
-        this.dependencyDistances = new ArrayList<>();
-    }
+    public int numberOfSyntacticLinks = 0;
+    private int dependencyDistanceSum = 0;
+    private int sentenceLength = 0;
 
     public void add(int distance) {
-        this.dependencyDistances.add(distance);
+        this.dependencyDistanceSum += distance;
+        this.sentenceLength++;
     }
 
     public double mdd() {
-        double mDD = (double) this.dependencyDistances.stream().reduce(0, Integer::sum);
-        return mDD / (double) this.dependencyDistances.size();
+        return (double) this.getDependencyDistanceSum() / (double) this.getSentenceLength();
     }
 
     public int getRootDistance() {
@@ -30,7 +24,11 @@ public class SentenceDataPoint {
         return numberOfSyntacticLinks;
     }
 
-    public List<Integer> getDependencyDistances() {
-        return dependencyDistances;
+    public int getDependencyDistanceSum() {
+        return dependencyDistanceSum;
+    }
+
+    public int getSentenceLength() {
+        return sentenceLength;
     }
 }

@@ -4,6 +4,8 @@ import io.azam.ulidj.ULID;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
+import org.texttechnologylab.mdd.data.EdgeDataPoint;
+import org.texttechnologylab.mdd.data.SentenceDataPoint;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 
 public class DummyEngine extends DependencyDistanceEngine {
@@ -15,7 +17,8 @@ public class DummyEngine extends DependencyDistanceEngine {
             final DocumentDataPoint documentDataPoint = DocumentDataPoint.fromJCas(jCas);
 
             String metaHash = documentDataPoint.getMetaHash();
-            if (pUlidSuffix) metaHash += "-" + ULID.random();
+            if (pUlidSuffix)
+                metaHash += "-" + ULID.random();
 
             NamedOutputStream outputStream = getOutputStream(metaHash, ".json");
 
@@ -28,5 +31,10 @@ public class DummyEngine extends DependencyDistanceEngine {
             e.printStackTrace();
             throw new AnalysisEngineProcessException(e);
         }
+    }
+
+    @Override
+    protected SentenceDataPoint createSentenceDataPoint() {
+        return new EdgeDataPoint();
     }
 }

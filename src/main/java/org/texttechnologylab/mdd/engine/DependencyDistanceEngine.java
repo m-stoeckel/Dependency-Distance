@@ -137,7 +137,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
         int rootDistance = -1;
         int numberOfSyntacticLinks = 0;
-        SentenceDataPoint sentenceDataPoint = new SentenceDataPoint();
+        SentenceDataPoint sentenceDataPoint = createSentenceDataPoint();
         for (Dependency dependency : dependencies) {
             numberOfSyntacticLinks++;
             String dependencyType = dependency.getDependencyType();
@@ -158,6 +158,10 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         sentenceDataPoint.rootDistance = rootDistance;
         sentenceDataPoint.numberOfSyntacticLinks = numberOfSyntacticLinks;
         return sentenceDataPoint;
+    }
+
+    protected SentenceDataPoint createSentenceDataPoint() {
+        return new SentenceDataPoint();
     }
 
     protected static void save(DocumentDataPoint dataPoints, OutputStream outputStream) throws IOException {
