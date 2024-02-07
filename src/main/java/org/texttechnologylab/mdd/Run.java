@@ -1,6 +1,10 @@
 package org.texttechnologylab.mdd;
 
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
+import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
+
+import java.util.Arrays;
+import java.util.Iterator;
+
 import org.junit.jupiter.api.Assertions;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.connection.mongodb.MongoDBConfig;
@@ -11,18 +15,16 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 import org.texttechnologylab.parliament.duui.DUUIGerParCorReader;
 
-import java.util.Arrays;
-import java.util.Iterator;
-
-import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
+import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 
 public class Run {
+
     public static void main(String[] args) {
         String pMongoDbConfigPath = System.getProperty("config");
         if (pMongoDbConfigPath == null || pMongoDbConfigPath.isEmpty()) {
             throw new IllegalArgumentException("No MongoDB config file provided");
         }
-        
+
         String pFilter = System.getProperty("filter", "{}");
         int pScale = Integer.parseInt(System.getProperty("scale", "8"));
 
@@ -58,7 +60,9 @@ public class Run {
                     pFailOnError = Boolean.parseBoolean(iterator.next());
                     break;
                 default:
-                    throw new IllegalArgumentException(String.format("Encountered illegal argument '%s' in CLI arguments: %s", argName, Arrays.toString(args)));
+                    throw new IllegalArgumentException(
+                        String.format("Encountered illegal argument '%s' in CLI arguments: %s", argName, Arrays.toString(args))
+                    );
             }
         }
 
@@ -67,23 +71,29 @@ public class Run {
             DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(new DUUIGerParCorReader(mongoDbConfig, pFilter));
 
             DUUIComposer composer = new DUUIComposer()
-                    .withSkipVerification(true)
-                    .withWorkers(pScale)
-                    .withCasPoolsize(4 * pScale)
-                    .withLuaContext(new DUUILuaContext().withJsonLibrary());
+                .withSkipVerification(true)
+                .withWorkers(pScale)
+                .withCasPoolsize(4 * pScale)
+                .withLuaContext(new DUUILuaContext().withJsonLibrary());
 
             DUUIUIMADriver uimaDriver = new DUUIUIMADriver();
             composer.addDriver(uimaDriver);
 
             DUUIPipelineComponent dependency = new DUUIUIMADriver.Component(
-                    createEngineDescription(
-                            DependencyDistanceEngine.class,
-                            DependencyDistanceEngine.PARAM_TARGET_LOCATION, pOutput,
-                            DependencyDistanceEngine.PARAM_OVERWRITE, pOverwrite,
-                            DependencyDistanceEngine.PARAM_COMPRESSION, pCompression,
-                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError
-                    )
-            ).withScale(pScale).build();
+                createEngineDescription(
+                    DependencyDistanceEngine.class,
+                    DependencyDistanceEngine.PARAM_TARGET_LOCATION,
+                    pOutput,
+                    DependencyDistanceEngine.PARAM_OVERWRITE,
+                    pOverwrite,
+                    DependencyDistanceEngine.PARAM_COMPRESSION,
+                    pCompression,
+                    DependencyDistanceEngine.PARAM_FAIL_ON_ERROR,
+                    pFailOnError
+                )
+            )
+                .withScale(pScale)
+                .build();
             composer.add(dependency);
 
             composer.run(processor, "mDD");

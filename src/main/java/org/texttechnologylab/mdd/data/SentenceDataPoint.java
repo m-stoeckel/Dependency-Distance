@@ -13,7 +13,7 @@ public class SentenceDataPoint {
     }
 
     public double mdd() {
-        return (double) this.getDependencyDistanceSum() / (double) this.getSentenceLength();
+        return ((double) this.getDependencyDistanceSum() / (double) this.getSentenceLength());
     }
 
     public int getRootDistance() {

@@ -1,6 +1,14 @@
 package org.texttechnologylab.mdd.data;
 
-import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.uima.cas.CASRuntimeException;
 import org.apache.uima.cas.Feature;
@@ -9,12 +17,10 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.AnnotationBase;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 
 public class DocumentDataPoint {
+
     protected final TreeMap<String, String> documentAnnotation;
     protected final TreeMap<String, String> documentMetaData;
     protected final ArrayList<SentenceDataPoint> sentences;
@@ -30,10 +36,8 @@ public class DocumentDataPoint {
         for (Feature feature : annotation.getType().getFeatures()) {
             try {
                 String featureValueAsString = annotation.getFeatureValueAsString(feature);
-                if (Objects.nonNull(featureValueAsString))
-                    map.put(feature.getShortName(), featureValueAsString);
-            } catch (CASRuntimeException ignored) {
-            }
+                if (Objects.nonNull(featureValueAsString)) map.put(feature.getShortName(), featureValueAsString);
+            } catch (CASRuntimeException ignored) {}
         }
         return map;
     }
@@ -51,10 +55,8 @@ public class DocumentDataPoint {
     public String getMetaHash() {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            this.documentMetaData
-                    .forEach((k, v) -> digest.update(String.join(":", k, v).getBytes(StandardCharsets.UTF_8)));
-            this.documentAnnotation
-                    .forEach((k, v) -> digest.update(String.join(":", k, v).getBytes(StandardCharsets.UTF_8)));
+            this.documentMetaData.forEach((k, v) -> digest.update(String.join(":", k, v).getBytes(StandardCharsets.UTF_8)));
+            this.documentAnnotation.forEach((k, v) -> digest.update(String.join(":", k, v).getBytes(StandardCharsets.UTF_8)));
             String metaHash = Hex.encodeHexString(digest.digest());
             return metaHash;
         } catch (NoSuchAlgorithmException e) {

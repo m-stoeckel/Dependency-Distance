@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EdgeDataPoint extends SentenceDataPoint {
+
     protected final ArrayList<Integer> dependencyDistances;
 
     public EdgeDataPoint() {

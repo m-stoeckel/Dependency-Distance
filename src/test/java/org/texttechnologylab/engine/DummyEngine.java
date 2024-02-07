@@ -9,6 +9,7 @@ import org.texttechnologylab.mdd.data.SentenceDataPoint;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 
 public class DummyEngine extends DependencyDistanceEngine {
+
     public DocumentDataPoint documentDataPoint;
 
     @Override
@@ -17,8 +18,7 @@ public class DummyEngine extends DependencyDistanceEngine {
             final DocumentDataPoint documentDataPoint = DocumentDataPoint.fromJCas(jCas);
 
             String metaHash = documentDataPoint.getMetaHash();
-            if (pUlidSuffix)
-                metaHash += "-" + ULID.random();
+            if (pUlidSuffix) metaHash += "-" + ULID.random();
 
             NamedOutputStream outputStream = getOutputStream(metaHash, ".json");
 

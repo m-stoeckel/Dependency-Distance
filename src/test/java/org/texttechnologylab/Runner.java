@@ -1,6 +1,10 @@
 package org.texttechnologylab;
 
+import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
+
 import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
+import java.nio.file.Path;
+import java.util.Objects;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
@@ -13,11 +17,6 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 import org.texttechnologylab.parliament.duui.DUUIGerParCorReader;
-
-import java.nio.file.Path;
-import java.util.Objects;
-
-import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
 public class Runner {
 
@@ -38,19 +37,28 @@ public class Runner {
             boolean pMkDirs = Boolean.parseBoolean(System.getProperty("mkdirs", "true"));
 
             System.out.printf(
-                    "Settings:\n" +
-                            "  pConfig:      %s\n" +
-                            "  pFilter:      %s\n" +
-                            "  pScale:       %d\n" +
-                            "  pPoolsize:    %d\n" +
-                            "  pOutput:      %s\n" +
-                            "  pOverwrite:   %b\n" +
-                            "  pCompression: %s\n" +
-                            "  pFailOnError: %b\n" +
-                            "  pFixDateYear: %b\n" +
-                            "  pMkDirs:      %b\n",
-                    pConfig, pFilter, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError,
-                    pFixDateYear, pMkDirs);
+                "Settings:\n" +
+                "  pConfig:      %s\n" +
+                "  pFilter:      %s\n" +
+                "  pScale:       %d\n" +
+                "  pPoolsize:    %d\n" +
+                "  pOutput:      %s\n" +
+                "  pOverwrite:   %b\n" +
+                "  pCompression: %s\n" +
+                "  pFailOnError: %b\n" +
+                "  pFixDateYear: %b\n" +
+                "  pMkDirs:      %b\n",
+                pConfig,
+                pFilter,
+                pScale,
+                pPoolsize,
+                pOutput,
+                pOverwrite,
+                pCompression,
+                pFailOnError,
+                pFixDateYear,
+                pMkDirs
+            );
 
             Path outputPath = Path.of(pOutput);
             if (!outputPath.toFile().exists() && pMkDirs) {
@@ -60,27 +68,34 @@ public class Runner {
             MongoDBConfig mongoDbConfig = new MongoDBConfig(pConfig);
             System.out.printf("MongoDBConfig:\n  %s\n", mongoDbConfig);
 
-            DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(
-                    new DUUIGerParCorReader(mongoDbConfig, pFilter));
+            DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(new DUUIGerParCorReader(mongoDbConfig, pFilter));
 
             DUUIComposer composer = new DUUIComposer()
-                    .withSkipVerification(true)
-                    .withWorkers(pScale)
-                    .withCasPoolsize(pPoolsize)
-                    .withLuaContext(new DUUILuaContext().withJsonLibrary());
+                .withSkipVerification(true)
+                .withWorkers(pScale)
+                .withCasPoolsize(pPoolsize)
+                .withLuaContext(new DUUILuaContext().withJsonLibrary());
 
             DUUIUIMADriver uimaDriver = new DUUIUIMADriver();
             composer.addDriver(uimaDriver);
 
             DUUIPipelineComponent dependency = new DUUIUIMADriver.Component(
-                    createEngineDescription(
-                            DependencyDistanceEngine.class,
-                            DependencyDistanceEngine.PARAM_TARGET_LOCATION, pOutput,
-                            DependencyDistanceEngine.PARAM_OVERWRITE, pOverwrite,
-                            DependencyDistanceEngine.PARAM_COMPRESSION, pCompression,
-                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError,
-                            DependencyDistanceEngine.PARAM_FIX_DATE_YEAR, pFixDateYear))
-                    .withScale(pScale).build();
+                createEngineDescription(
+                    DependencyDistanceEngine.class,
+                    DependencyDistanceEngine.PARAM_TARGET_LOCATION,
+                    pOutput,
+                    DependencyDistanceEngine.PARAM_OVERWRITE,
+                    pOverwrite,
+                    DependencyDistanceEngine.PARAM_COMPRESSION,
+                    pCompression,
+                    DependencyDistanceEngine.PARAM_FAIL_ON_ERROR,
+                    pFailOnError,
+                    DependencyDistanceEngine.PARAM_FIX_DATE_YEAR,
+                    pFixDateYear
+                )
+            )
+                .withScale(pScale)
+                .build();
             composer.add(dependency);
 
             composer.run(processor, "mDD");
@@ -114,17 +129,26 @@ public class Runner {
             boolean pMkDirs = Boolean.parseBoolean(System.getProperty("mkdirs", "true"));
 
             System.out.printf(
-                    "Settings:\n" +
-                            "  pInput:       %s\n" +
-                            "  pScale:       %d\n" +
-                            "  pPoolsize:    %d\n" +
-                            "  pOutput:      %s\n" +
-                            "  pOverwrite:   %b\n" +
-                            "  pCompression: %s\n" +
-                            "  pFailOnError: %b\n" +
-                            "  pFixDateYear: %b\n" +
-                            "  pMkDirs:      %b\n",
-                    pInput, pScale, pPoolsize, pOutput, pOverwrite, pCompression, pFailOnError, pFixDateYear, pMkDirs);
+                "Settings:\n" +
+                "  pInput:       %s\n" +
+                "  pScale:       %d\n" +
+                "  pPoolsize:    %d\n" +
+                "  pOutput:      %s\n" +
+                "  pOverwrite:   %b\n" +
+                "  pCompression: %s\n" +
+                "  pFailOnError: %b\n" +
+                "  pFixDateYear: %b\n" +
+                "  pMkDirs:      %b\n",
+                pInput,
+                pScale,
+                pPoolsize,
+                pOutput,
+                pOverwrite,
+                pCompression,
+                pFailOnError,
+                pFixDateYear,
+                pMkDirs
+            );
 
             Path outputPath = Path.of(pOutput);
             if (!outputPath.toFile().exists() && pMkDirs) {
@@ -135,23 +159,31 @@ public class Runner {
             DUUIAsynchronousProcessor processor = new DUUIAsynchronousProcessor(reader);
 
             DUUIComposer composer = new DUUIComposer()
-                    .withSkipVerification(true)
-                    .withWorkers(pScale)
-                    .withCasPoolsize(pPoolsize)
-                    .withLuaContext(new DUUILuaContext().withJsonLibrary());
+                .withSkipVerification(true)
+                .withWorkers(pScale)
+                .withCasPoolsize(pPoolsize)
+                .withLuaContext(new DUUILuaContext().withJsonLibrary());
 
             DUUIUIMADriver uimaDriver = new DUUIUIMADriver();
             composer.addDriver(uimaDriver);
 
             DUUIPipelineComponent dependency = new DUUIUIMADriver.Component(
-                    createEngineDescription(
-                            DependencyDistanceEngine.class,
-                            DependencyDistanceEngine.PARAM_TARGET_LOCATION, pOutput,
-                            DependencyDistanceEngine.PARAM_OVERWRITE, pOverwrite,
-                            DependencyDistanceEngine.PARAM_COMPRESSION, pCompression,
-                            DependencyDistanceEngine.PARAM_FAIL_ON_ERROR, pFailOnError,
-                            DependencyDistanceEngine.PARAM_FIX_DATE_YEAR, pFixDateYear))
-                    .withScale(pScale).build();
+                createEngineDescription(
+                    DependencyDistanceEngine.class,
+                    DependencyDistanceEngine.PARAM_TARGET_LOCATION,
+                    pOutput,
+                    DependencyDistanceEngine.PARAM_OVERWRITE,
+                    pOverwrite,
+                    DependencyDistanceEngine.PARAM_COMPRESSION,
+                    pCompression,
+                    DependencyDistanceEngine.PARAM_FAIL_ON_ERROR,
+                    pFailOnError,
+                    DependencyDistanceEngine.PARAM_FIX_DATE_YEAR,
+                    pFixDateYear
+                )
+            )
+                .withScale(pScale)
+                .build();
             composer.add(dependency);
 
             composer.run(processor, "mDD");
