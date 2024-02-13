@@ -78,7 +78,7 @@
         begin="0"
         end="36247"
         language="de"
-        documentTitle="Test Document"
+        documentTitle="Test Document from 13.12.2021"
         documentId="test.xmi"
         documentUri="file:/src/test/resources/test.xmi"
         documentBaseUri="file:/src/test/resources/"
@@ -88,9 +88,10 @@
         sofa="1"
         author="Manuel Stoeckel"
         subtitle="Test Document"
-        dateDay="30"
-        dateMonth="1" dateYear="2024"
-        timestamp="1706610932" />
+        dateDay="0"
+        dateMonth="0"
+        dateYear="4000"
+        timestamp="-123" />
     <type6:Sentence
         xmi:id="10"
         sofa="1"

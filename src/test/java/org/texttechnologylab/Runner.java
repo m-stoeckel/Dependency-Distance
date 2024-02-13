@@ -2,9 +2,9 @@ package org.texttechnologylab;
 
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import java.nio.file.Path;
 import java.util.Objects;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
@@ -17,6 +17,8 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 import org.texttechnologylab.parliament.duui.DUUIGerParCorReader;
+
+import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 
 public class Runner {
 
