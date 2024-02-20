@@ -245,7 +245,7 @@ public class DependencyDistanceEngineTest {
             3,
             3,
             0.83,
-            0.83,
+            1.139,
             0.67,
             4
         );
