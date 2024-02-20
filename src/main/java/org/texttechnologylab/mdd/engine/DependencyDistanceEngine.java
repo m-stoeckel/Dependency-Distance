@@ -1,13 +1,5 @@
 package org.texttechnologylab.mdd.engine;
 
-import com.google.gson.Gson;
-import de.tudarmstadt.ukp.dkpro.core.api.io.JCasFileWriter_ImplBase;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
-import io.azam.ulidj.ULID;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -27,6 +19,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.util.JCasUtil;
@@ -34,6 +27,18 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.tcas.Annotation;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
 import org.texttechnologylab.mdd.data.SentenceDataPoint;
+
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.ImmutableGraph.Builder;
+import com.google.gson.Gson;
+
+import de.tudarmstadt.ukp.dkpro.core.api.io.JCasFileWriter_ImplBase;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
+import io.azam.ulidj.ULID;
 
 public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
@@ -168,33 +173,26 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
             .sorted(Comparator.comparingInt(Annotation::getBegin))
             .collect(Collectors.toCollection(ArrayList::new));
 
-        int rootDistance = -1;
-        int numberOfSyntacticLinks = 0;
-        SentenceDataPoint sentenceDataPoint = createSentenceDataPoint();
+        Builder<Integer> graphBuilder = GraphBuilder.directed().<Integer>immutable().addNode(0);
         for (Dependency dependency : dependencies) {
-            numberOfSyntacticLinks++;
             String dependencyType = dependency.getDependencyType();
             if (dependency instanceof PUNCT || dependencyType.equalsIgnoreCase("PUNCT")) {
                 continue;
             }
             Token governor = dependency.getGovernor();
             Token dependent = dependency.getDependent();
-            if (dependency instanceof ROOT || governor == dependent || dependencyType.equalsIgnoreCase("ROOT")) {
-                rootDistance = numberOfSyntacticLinks;
-                continue;
+
+            int govenorIndex = tokens.indexOf(governor) + 1;
+            int dependentIndex = tokens.indexOf(dependent) + 1;
+
+            if (dependency instanceof ROOT || dependencyType.equalsIgnoreCase("ROOT") || governor == dependent) {
+                graphBuilder.putEdge(0, dependentIndex);
+            } else {
+                graphBuilder.putEdge(govenorIndex, dependentIndex);
             }
-
-            int dist = Math.abs(tokens.indexOf(governor) - tokens.indexOf(dependent));
-
-            sentenceDataPoint.add(dist);
         }
-        sentenceDataPoint.rootDistance = rootDistance;
-        sentenceDataPoint.numberOfSyntacticLinks = numberOfSyntacticLinks;
-        return sentenceDataPoint;
-    }
 
-    protected SentenceDataPoint createSentenceDataPoint() {
-        return new SentenceDataPoint();
+        return new SentenceDataPoint(graphBuilder.build());
     }
 
     protected static void save(DocumentDataPoint dataPoints, OutputStream outputStream) throws IOException {

@@ -21,7 +21,6 @@ import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.jcas.tcas.DocumentAnnotation;
 import org.apache.uima.resource.metadata.TypeSystemDescription;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -32,10 +31,8 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.io.DUUIAsynchronousProce
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.engine.DummyEngine;
-import org.texttechnologylab.engine.DummyEngineEdge;
+import org.texttechnologylab.mdd.data.DependencyDataPoint;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
-import org.texttechnologylab.mdd.data.EdgeDataPoint;
-import org.texttechnologylab.mdd.data.SentenceDataPoint;
 import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 
 public class DependencyDistanceEngineTest {
@@ -140,22 +137,88 @@ public class DependencyDistanceEngineTest {
         }
     }
 
-    final List<Integer> expectedDistances = List.of(3, 2, 1, 1, 3, 2, 1, 4);
-    final int expectedDistanceSum = expectedDistances.stream().reduce(0, (a, b) -> a + b);
-    final int expectedNumberOfSyntacticLinks = 10;
-    final int expectedSentenceLength = 8;
-    final int expectedRootDistance = 5;
-    final double expectedMDD = 2.125;
+    class ExpectedValues implements DependencyDataPoint {
+
+        List<Integer> expectedDistances;
+        int expectedDistanceSum;
+        int expectedNumberOfSyntacticLinks;
+        int expectedSentenceLength;
+        int expectedRootDistance;
+        double expectedMDD;
+        int expectedCrossings;
+
+        public ExpectedValues(
+            List<Integer> expectedDistances,
+            int expectedNumberOfSyntacticLinks,
+            int expectedSentenceLength,
+            int expectedRootDistance,
+            double expectedMDD,
+            int expectedCrossings
+        ) {
+            this.expectedDistances = expectedDistances;
+            this.expectedNumberOfSyntacticLinks = expectedNumberOfSyntacticLinks;
+            this.expectedSentenceLength = expectedSentenceLength;
+            this.expectedRootDistance = expectedRootDistance;
+            this.expectedMDD = expectedMDD;
+            this.expectedCrossings = expectedCrossings;
+        }
+
+        @Override
+        public int getSentenceLength() {
+            return expectedSentenceLength;
+        }
+
+        @Override
+        public int getNumberOfSyntacticLinks() {
+            return expectedNumberOfSyntacticLinks;
+        }
+
+        @Override
+        public int getRootDistance() {
+            return expectedRootDistance;
+        }
+
+        @Override
+        public ArrayList<Integer> getDependencyDistances() {
+            return new ArrayList<>(expectedDistances);
+        }
+
+        @Override
+        public int getDependencyDistanceSum() {
+            return expectedDistances.stream().reduce(0, (a, b) -> a + b);
+        }
+
+        @Override
+        public double mdd() {
+            return expectedMDD;
+        }
+
+        @Override
+        public int getNumberOfCrossings() {
+            return expectedCrossings;
+        }
+    }
 
     @Test
-    public void testWithValue() {
+    public void testJumped() {
+        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 10, 8, 5, 2.125, 0);
+        testWithValue("src/test/resources/test-jumped.xmi", expected);
+    }
+
+    @Test
+    public void testGeklappt() {
+        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 6, 5, 6, 2.4, 1);
+        testWithValue("src/test/resources/test-geklappt.xmi", expected);
+    }
+
+    public void testWithValue(String path, ExpectedValues expected) {
         try {
             String pOutput = System.getProperty("output", "target/output/");
 
             TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory.createTypeSystemDescriptionFromPath(
                 "src/test/resources/TypeSystem.xml"
             );
-            JCas jCas = JCasFactory.createJCas("src/test/resources/test.xmi", typeSystemDescription);
+            JCas jCas = JCasFactory.createJCas(path, typeSystemDescription);
 
             AnalysisEngine engine = createEngine(
                 DummyEngine.class,
@@ -191,8 +254,7 @@ public class DependencyDistanceEngineTest {
                 Assertions.assertEquals("13", documentAnnotation.get("dateDay"));
                 Assertions.assertEquals("1639350000000", documentAnnotation.get("timestamp"));
 
-                SentenceDataPoint sentenceDataPoint = (SentenceDataPoint) documentDataPoint.getSentences().get(0);
-                int dependencyDistanceSum = sentenceDataPoint.getDependencyDistanceSum();
+                DependencyDataPoint sentenceDataPoint = (DependencyDataPoint) documentDataPoint.getSentences().get(0);
 
                 System.out.println("Tokens:");
                 ArrayList<Token> tokens = new ArrayList<>(JCasUtil.select(jCas, Token.class));
@@ -204,82 +266,7 @@ public class DependencyDistanceEngineTest {
                 ArrayList<Dependency> dependencies = new ArrayList<>(JCasUtil.select(jCas, Dependency.class));
                 dependencies.sort(Comparator.comparingInt(o -> o.getDependent().getBegin()));
 
-                System.out.println("Dependencies:");
-                for (Dependency dep : dependencies) {
-                    Token dependent = dep.getDependent();
-                    Token governor = dep.getGovernor();
-                    String dependencyType = dep.getDependencyType();
-                    if (dep instanceof PUNCT || dependencyType.equalsIgnoreCase("PUNCT")) continue;
-
-                    System.out.printf(
-                        "  %-6s %d -> %-6s %d\n",
-                        dependent.getCoveredText(),
-                        tokens.indexOf(dependent) + 1,
-                        dep instanceof ROOT ? "ROOT" : governor.getCoveredText(),
-                        tokens.indexOf(governor) + 1
-                    );
-                }
-
-                Assertions.assertEquals(expectedDistanceSum, dependencyDistanceSum);
-                Assertions.assertEquals(expectedSentenceLength, sentenceDataPoint.getSentenceLength());
-                Assertions.assertEquals(expectedNumberOfSyntacticLinks, sentenceDataPoint.numberOfSyntacticLinks);
-                Assertions.assertEquals(expectedRootDistance, sentenceDataPoint.rootDistance);
-                Assertions.assertEquals(expectedMDD, sentenceDataPoint.mdd());
-            } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
-                throw new RuntimeException(e);
-            }
-
-            Assertions.assertTrue(true);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assertions.fail();
-        }
-    }
-
-    @Test
-    public void testWithValueList() {
-        try {
-            String pOutput = System.getProperty("output", "target/output/");
-
-            TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory.createTypeSystemDescriptionFromPath(
-                "src/test/resources/TypeSystem.xml"
-            );
-            JCas jCas = JCasFactory.createJCas("src/test/resources/test.xmi", typeSystemDescription);
-
-            AnalysisEngine engine = createEngine(
-                DummyEngineEdge.class,
-                DummyEngineEdge.PARAM_TARGET_LOCATION,
-                pOutput,
-                DummyEngineEdge.PARAM_OVERWRITE,
-                true,
-                DummyEngineEdge.PARAM_COMPRESSION,
-                CompressionMethod.NONE,
-                DummyEngineEdge.PARAM_FAIL_ON_ERROR,
-                true
-            );
-
-            engine.process(jCas);
-
-            try {
-                Field field = PrimitiveAnalysisEngine_impl.class.getDeclaredField("mAnalysisComponent");
-                field.setAccessible(true);
-
-                AnalysisComponent component = (AnalysisComponent) field.get(engine);
-                DummyEngineEdge dummyEngine = (DummyEngineEdge) component;
-
-                DocumentDataPoint documentDataPoint = dummyEngine.documentDataPoint;
-                EdgeDataPoint sentenceDataPoint = (EdgeDataPoint) documentDataPoint.getSentences().get(0);
-                List<Integer> dependencyDistances = sentenceDataPoint.getDependencyDistances();
-
-                System.out.println("Tokens:");
-                ArrayList<Token> tokens = new ArrayList<>(JCasUtil.select(jCas, Token.class));
-                for (int i = 0; i < tokens.size() - 1; i++) {
-                    Token token = tokens.get(i);
-                    System.out.printf("  %d: '%s' (%d, %d)\n", i, token.getCoveredText(), token.getBegin(), token.getEnd());
-                }
-
-                ArrayList<Dependency> dependencies = new ArrayList<>(JCasUtil.select(jCas, Dependency.class));
-                dependencies.sort(Comparator.comparingInt(o -> o.getDependent().getBegin()));
+                ArrayList<Integer> dependencyDistances = sentenceDataPoint.getDependencyDistances();
 
                 int counter = 0;
                 System.out.println("Dependencies:");
@@ -299,11 +286,12 @@ public class DependencyDistanceEngineTest {
                     );
                 }
 
-                Assertions.assertEquals(expectedDistances, dependencyDistances);
-                Assertions.assertEquals(expectedSentenceLength, sentenceDataPoint.getSentenceLength());
-                Assertions.assertEquals(expectedNumberOfSyntacticLinks, sentenceDataPoint.numberOfSyntacticLinks);
-                Assertions.assertEquals(expectedRootDistance, sentenceDataPoint.rootDistance);
-                Assertions.assertEquals(expectedMDD, sentenceDataPoint.mdd());
+                Assertions.assertEquals(expected.getDependencyDistances(), dependencyDistances);
+                Assertions.assertEquals(expected.getDependencyDistanceSum(), sentenceDataPoint.getDependencyDistanceSum());
+                Assertions.assertEquals(expected.getSentenceLength(), sentenceDataPoint.getSentenceLength());
+                Assertions.assertEquals(expected.getNumberOfSyntacticLinks(), sentenceDataPoint.getNumberOfSyntacticLinks());
+                Assertions.assertEquals(expected.getRootDistance(), sentenceDataPoint.getRootDistance());
+                Assertions.assertEquals(expected.mdd(), sentenceDataPoint.mdd());
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
             }
@@ -314,4 +302,95 @@ public class DependencyDistanceEngineTest {
             Assertions.fail();
         }
     }
+    // @Test
+    // public void testWithValueList() {
+    // try {
+    // String pOutput = System.getProperty("output", "target/output/");
+
+    // TypeSystemDescription typeSystemDescription =
+    // TypeSystemDescriptionFactory.createTypeSystemDescriptionFromPath(
+    // "src/test/resources/TypeSystem.xml"
+    // );
+    // JCas jCas = JCasFactory.createJCas("src/test/resources/test.xmi",
+    // typeSystemDescription);
+
+    // AnalysisEngine engine = createEngine(
+    // DummyEngineEdge.class,
+    // DummyEngineEdge.PARAM_TARGET_LOCATION,
+    // pOutput,
+    // DummyEngineEdge.PARAM_OVERWRITE,
+    // true,
+    // DummyEngineEdge.PARAM_COMPRESSION,
+    // CompressionMethod.NONE,
+    // DummyEngineEdge.PARAM_FAIL_ON_ERROR,
+    // true
+    // );
+
+    // engine.process(jCas);
+
+    // try {
+    // Field field =
+    // PrimitiveAnalysisEngine_impl.class.getDeclaredField("mAnalysisComponent");
+    // field.setAccessible(true);
+
+    // AnalysisComponent component = (AnalysisComponent) field.get(engine);
+    // DummyEngineEdge dummyEngine = (DummyEngineEdge) component;
+
+    // DocumentDataPoint documentDataPoint = dummyEngine.documentDataPoint;
+    // EdgeDataPoint sentenceDataPoint = (EdgeDataPoint)
+    // documentDataPoint.getSentences().get(0);
+    // List<Integer> dependencyDistances =
+    // sentenceDataPoint.getDependencyDistances();
+
+    // System.out.println("Tokens:");
+    // ArrayList<Token> tokens = new ArrayList<>(JCasUtil.select(jCas,
+    // Token.class));
+    // for (int i = 0; i < tokens.size() - 1; i++) {
+    // Token token = tokens.get(i);
+    // System.out.printf(" %d: '%s' (%d, %d)\n", i, token.getCoveredText(),
+    // token.getBegin(), token.getEnd());
+    // }
+
+    // ArrayList<Dependency> dependencies = new ArrayList<>(JCasUtil.select(jCas,
+    // Dependency.class));
+    // dependencies.sort(Comparator.comparingInt(o -> o.getDependent().getBegin()));
+
+    // int counter = 0;
+    // System.out.println("Dependencies:");
+    // for (Dependency dep : dependencies) {
+    // Token dependent = dep.getDependent();
+    // Token governor = dep.getGovernor();
+    // String dependencyType = dep.getDependencyType();
+    // if (dep instanceof PUNCT || dependencyType.equalsIgnoreCase("PUNCT"))
+    // continue;
+
+    // System.out.printf(
+    // " %-6s %d -> %-6s %d = %d\n",
+    // dependent.getCoveredText(),
+    // tokens.indexOf(dependent) + 1,
+    // dep instanceof ROOT ? "ROOT" : governor.getCoveredText(),
+    // tokens.indexOf(governor) + 1,
+    // dep instanceof ROOT ? 0 : dependencyDistances.get(counter++)
+    // );
+    // }
+
+    // Assertions.assertEquals(expectedDistances, dependencyDistances);
+    // Assertions.assertEquals(expectedSentenceLength,
+    // sentenceDataPoint.getSentenceLength());
+    // Assertions.assertEquals(expectedNumberOfSyntacticLinks,
+    // sentenceDataPoint.numberOfSyntacticLinks);
+    // Assertions.assertEquals(expectedRootDistance,
+    // sentenceDataPoint.rootDistance);
+    // Assertions.assertEquals(expectedMDD, sentenceDataPoint.mdd());
+    // } catch (NoSuchFieldException | IllegalAccessException |
+    // IllegalArgumentException | SecurityException e) {
+    // throw new RuntimeException(e);
+    // }
+
+    // Assertions.assertTrue(true);
+    // } catch (Exception e) {
+    // e.printStackTrace();
+    // Assertions.fail();
+    // }
+    // }
 }

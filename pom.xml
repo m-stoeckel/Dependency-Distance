@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.texttechnologylab</groupId>
-    <artifactId>DependencyDistance</artifactId>
+    <artifactId>DependencyExtractor</artifactId>
     <version>0.0.1</version>
-    <name>DependencyDistance</name>
+    <name>DependencyExtractor</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -166,6 +166,12 @@
             <artifactId>commons-codec</artifactId>
             <version>1.16.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.0.0-jre</version>
+          </dependency>
 
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>
