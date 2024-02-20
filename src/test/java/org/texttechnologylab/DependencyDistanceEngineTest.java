@@ -153,6 +153,7 @@ public class DependencyDistanceEngineTest {
         int expectedDependcyHeight;
         double expectedDepthMean;
         double expectedDepthVariance;
+        int expectedLeaves;
 
         public ExpectedValues(
             List<Integer> expectedDistances,
@@ -165,7 +166,8 @@ public class DependencyDistanceEngineTest {
             int expectedTreeHeight,
             int expectedDependcyHeight,
             double expectedDepthMean,
-            double expectedDepthVariance
+            double expectedDepthVariance,
+            int expectedLeaves
         ) {
             this.expectedDistances = expectedDistances;
             this.expectedNumberOfSyntacticLinks = expectedNumberOfSyntacticLinks;
@@ -178,6 +180,7 @@ public class DependencyDistanceEngineTest {
             this.expectedDependcyHeight = expectedDependcyHeight;
             this.expectedDepthMean = expectedDepthMean;
             this.expectedDepthVariance = expectedDepthVariance;
+            this.expectedLeaves = expectedLeaves;
         }
 
         @Override
@@ -237,8 +240,7 @@ public class DependencyDistanceEngineTest {
 
         @Override
         public int leaves() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'leaves'");
+            return expectedLeaves;
         }
 
         @Override
@@ -267,13 +269,13 @@ public class DependencyDistanceEngineTest {
 
     @Test
     public void testJumped() {
-        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 8, 9, 5, 2.125, 1.14955944251, 0, 2, 6, -1, -1);
+        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 8, 9, 5, 2.125, 1.14955944251, 0, 2, 6, -1, -1, -1);
         testWithValue("src/test/resources/test-jumped.xmi", expected);
     }
 
     @Test
     public void testGeklappt() {
-        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 5, 6, 6, 2.6, 0.8362480242, 1, 3, 13, 1.17, 0.47);
+        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 5, 6, 6, 2.6, 0.8362480242, 1, 3, 13, 1.17, 0.47, 3);
         testWithValue("src/test/resources/test-geklappt.xmi", expected);
     }
 
@@ -365,6 +367,8 @@ public class DependencyDistanceEngineTest {
                 Assertions.assertEquals(expected.treeHeight(), sentenceDataPoint.treeHeight());
                 Assertions.assertEquals(expected.depthMean(), sentenceDataPoint.depthMean(), 0.01);
                 Assertions.assertEquals(expected.depthVariance(), sentenceDataPoint.depthVariance(), 0.01);
+
+                Assertions.assertEquals(expected.leaves(), sentenceDataPoint.leaves());
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
             }

@@ -120,8 +120,16 @@ public class SentenceDataPoint implements DependencyDataPoint {
 
     @Override
     public int leaves() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'leaves'");
+        return this.recurseLeaves(0);
+    }
+
+    private int recurseLeaves(Integer node) {
+        return this.dependencyGraph.successors(node)
+            .stream()
+            .flatMap(successor ->
+                this.dependencyGraph.successors(successor).isEmpty() ? Stream.of(1) : Stream.of(this.recurseLeaves(successor))
+            )
+            .reduce(0, (a, b) -> a + b);
     }
 
     @Override
