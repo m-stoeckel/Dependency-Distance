@@ -1,5 +1,17 @@
 package org.texttechnologylab.mdd.engine;
 
+import com.google.common.graph.EndpointPair;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.ImmutableGraph.Builder;
+import com.google.gson.Gson;
+import de.tudarmstadt.ukp.dkpro.core.api.io.JCasFileWriter_ImplBase;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
+import io.azam.ulidj.ULID;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,7 +31,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
 import org.apache.uima.fit.util.JCasUtil;
@@ -27,18 +38,6 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.tcas.Annotation;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
 import org.texttechnologylab.mdd.data.SentenceDataPoint;
-
-import com.google.common.graph.GraphBuilder;
-import com.google.common.graph.ImmutableGraph.Builder;
-import com.google.gson.Gson;
-
-import de.tudarmstadt.ukp.dkpro.core.api.io.JCasFileWriter_ImplBase;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
-import io.azam.ulidj.ULID;
 
 public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
@@ -174,25 +173,30 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
             .collect(Collectors.toCollection(ArrayList::new));
 
         Builder<Integer> graphBuilder = GraphBuilder.directed().<Integer>immutable().addNode(0);
+        ArrayList<EndpointPair<Integer>> edges = new ArrayList<>();
         for (Dependency dependency : dependencies) {
-            String dependencyType = dependency.getDependencyType();
-            if (dependency instanceof PUNCT || dependencyType.equalsIgnoreCase("PUNCT")) {
-                continue;
-            }
             Token governor = dependency.getGovernor();
             Token dependent = dependency.getDependent();
 
             int govenorIndex = tokens.indexOf(governor) + 1;
             int dependentIndex = tokens.indexOf(dependent) + 1;
 
-            if (dependency instanceof ROOT || dependencyType.equalsIgnoreCase("ROOT") || governor == dependent) {
+            String dependencyType = dependency.getDependencyType();
+            if (dependency instanceof PUNCT || dependencyType.equalsIgnoreCase("PUNCT")) {
+                edges.add(EndpointPair.ordered(govenorIndex, dependentIndex));
+            } else if (dependency instanceof ROOT || dependencyType.equalsIgnoreCase("ROOT") || governor == dependent) {
                 graphBuilder.putEdge(0, dependentIndex);
             } else {
                 graphBuilder.putEdge(govenorIndex, dependentIndex);
             }
         }
 
-        return new SentenceDataPoint(graphBuilder.build());
+        ImmutableGraph<Integer> dependencyGraph = graphBuilder.build();
+
+        edges.forEach(edge -> graphBuilder.putEdge(edge.source(), edge.target()));
+        ImmutableGraph<Integer> dependencyGraphWithPunct = graphBuilder.build();
+        
+        return new SentenceDataPoint(dependencyGraph, dependencyGraphWithPunct);
     }
 
     protected static void save(DocumentDataPoint dataPoints, OutputStream outputStream) throws IOException {

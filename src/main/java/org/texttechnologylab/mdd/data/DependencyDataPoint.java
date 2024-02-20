@@ -15,6 +15,8 @@ public interface DependencyDataPoint {
     int getDependencyDistanceSum();
 
     double mdd();
+    
+    double ndd();
 
     int getNumberOfCrossings();
 

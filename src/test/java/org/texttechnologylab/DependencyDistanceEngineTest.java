@@ -145,6 +145,7 @@ public class DependencyDistanceEngineTest {
         int expectedSentenceLength;
         int expectedRootDistance;
         double expectedMDD;
+        double expectedNDD;
         int expectedCrossings;
 
         public ExpectedValues(
@@ -153,6 +154,7 @@ public class DependencyDistanceEngineTest {
             int expectedSentenceLength,
             int expectedRootDistance,
             double expectedMDD,
+            double expectedNDD,
             int expectedCrossings
         ) {
             this.expectedDistances = expectedDistances;
@@ -160,6 +162,7 @@ public class DependencyDistanceEngineTest {
             this.expectedSentenceLength = expectedSentenceLength;
             this.expectedRootDistance = expectedRootDistance;
             this.expectedMDD = expectedMDD;
+            this.expectedNDD = expectedNDD;
             this.expectedCrossings = expectedCrossings;
         }
 
@@ -194,6 +197,11 @@ public class DependencyDistanceEngineTest {
         }
 
         @Override
+        public double ndd() {
+            return expectedNDD;
+        }
+
+        @Override
         public int getNumberOfCrossings() {
             return expectedCrossings;
         }
@@ -201,13 +209,13 @@ public class DependencyDistanceEngineTest {
 
     @Test
     public void testJumped() {
-        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 10, 8, 5, 2.125, 0);
+        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 8, 9, 5, 2.125, 1.14955944251, 0);
         testWithValue("src/test/resources/test-jumped.xmi", expected);
     }
 
     @Test
     public void testGeklappt() {
-        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 6, 5, 6, 2.4, 1);
+        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 5, 6, 6, 2.6, 0.8362480242, 1);
         testWithValue("src/test/resources/test-geklappt.xmi", expected);
     }
 
@@ -291,7 +299,10 @@ public class DependencyDistanceEngineTest {
                 Assertions.assertEquals(expected.getSentenceLength(), sentenceDataPoint.getSentenceLength());
                 Assertions.assertEquals(expected.getNumberOfSyntacticLinks(), sentenceDataPoint.getNumberOfSyntacticLinks());
                 Assertions.assertEquals(expected.getRootDistance(), sentenceDataPoint.getRootDistance());
-                Assertions.assertEquals(expected.mdd(), sentenceDataPoint.mdd());
+                
+                final double eps = 0.00001;
+                Assertions.assertTrue(Math.abs(expected.mdd() - sentenceDataPoint.mdd()) < eps);
+                Assertions.assertTrue(Math.abs(expected.ndd() - sentenceDataPoint.ndd()) < eps);
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
             }
