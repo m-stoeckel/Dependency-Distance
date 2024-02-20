@@ -4,8 +4,12 @@ import com.google.common.graph.EndpointPair;
 import com.google.common.graph.ImmutableGraph;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.eclipse.jetty.server.RequestLog.Collection;
 
 public class SentenceDataPoint implements DependencyDataPoint {
 
@@ -86,19 +90,27 @@ public class SentenceDataPoint implements DependencyDataPoint {
 
     @Override
     public int dependencyHeight() {
-        return this.getDependencyHeight(0);
+        return this.getMaxDependencyHeight(0);
     }
 
-    private int getDependencyHeight(Integer node) {
-        return this.dependencyGraph.successors(node).stream().map(
-            successor -> Math.abs(node - successor) + this.getDependencyHeight(successor)
-        ).max(Comparator.naturalOrder()).orElse(0);
+    private int getMaxDependencyHeight(Integer node) {
+        return this.dependencyGraph.successors(node)
+            .stream()
+            .map(successor -> Math.abs(node - successor) + this.getMaxDependencyHeight(successor))
+            .max(Comparator.naturalOrder())
+            .orElse(0);
     }
 
     @Override
     public double depthMean() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'depthMean'");
+        return this.getAllDependencyDepth(0, 0).stream().mapToDouble(Double::valueOf).average().getAsDouble();
+    }
+
+    private List<Integer> getAllDependencyDepth(Integer node, int depth) {
+        return this.dependencyGraph.successors(node)
+            .stream()
+            .flatMap(successor -> Stream.concat(Stream.of(depth), this.getAllDependencyDepth(successor, depth + 1).stream()))
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -115,8 +127,7 @@ public class SentenceDataPoint implements DependencyDataPoint {
 
     @Override
     public int treeHeight() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'treeHeight'");
+        return this.getAllDependencyDepth(0, 1).stream().max(Comparator.naturalOrder()).get();
     }
 
     @Override
