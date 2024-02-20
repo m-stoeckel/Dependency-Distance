@@ -152,6 +152,7 @@ public class DependencyDistanceEngineTest {
         int expectedTreeHeight;
         int expectedDependcyHeight;
         double expectedDepthMean;
+        double expectedDepthVariance;
 
         public ExpectedValues(
             List<Integer> expectedDistances,
@@ -163,7 +164,8 @@ public class DependencyDistanceEngineTest {
             int expectedCrossings,
             int expectedTreeHeight,
             int expectedDependcyHeight,
-            double expectedDepthMean
+            double expectedDepthMean,
+            double expectedDepthVariance
         ) {
             this.expectedDistances = expectedDistances;
             this.expectedNumberOfSyntacticLinks = expectedNumberOfSyntacticLinks;
@@ -175,6 +177,7 @@ public class DependencyDistanceEngineTest {
             this.expectedTreeHeight = expectedTreeHeight;
             this.expectedDependcyHeight = expectedDependcyHeight;
             this.expectedDepthMean = expectedDepthMean;
+            this.expectedDepthVariance = expectedDepthVariance;
         }
 
         @Override
@@ -219,7 +222,7 @@ public class DependencyDistanceEngineTest {
 
         @Override
         public int dependencyHeight() {
-            return expectedDependcyHeight;   
+            return expectedDependcyHeight;
         }
 
         @Override
@@ -229,8 +232,7 @@ public class DependencyDistanceEngineTest {
 
         @Override
         public double depthVariance() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'depthVariance'");
+            return expectedDepthVariance;
         }
 
         @Override
@@ -265,13 +267,13 @@ public class DependencyDistanceEngineTest {
 
     @Test
     public void testJumped() {
-        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 8, 9, 5, 2.125, 1.14955944251, 0, 2, 6, -1);
+        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 8, 9, 5, 2.125, 1.14955944251, 0, 2, 6, -1, -1);
         testWithValue("src/test/resources/test-jumped.xmi", expected);
     }
 
     @Test
     public void testGeklappt() {
-        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 5, 6, 6, 2.6, 0.8362480242, 1, 3, 13, 1.17);
+        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 5, 6, 6, 2.6, 0.8362480242, 1, 3, 13, 1.17, 0.47);
         testWithValue("src/test/resources/test-geklappt.xmi", expected);
     }
 
@@ -356,13 +358,13 @@ public class DependencyDistanceEngineTest {
                 Assertions.assertEquals(expected.getNumberOfSyntacticLinks(), sentenceDataPoint.getNumberOfSyntacticLinks());
                 Assertions.assertEquals(expected.rootDistance(), sentenceDataPoint.rootDistance());
                 Assertions.assertEquals(expected.dependencyHeight(), sentenceDataPoint.dependencyHeight());
-                
-                
+
                 Assertions.assertEquals(expected.mdd(), sentenceDataPoint.mdd(), 0.00001);
                 Assertions.assertEquals(expected.ndd(), sentenceDataPoint.ndd(), 0.00001);
-                
+
                 Assertions.assertEquals(expected.treeHeight(), sentenceDataPoint.treeHeight());
                 Assertions.assertEquals(expected.depthMean(), sentenceDataPoint.depthMean(), 0.01);
+                Assertions.assertEquals(expected.depthVariance(), sentenceDataPoint.depthVariance(), 0.01);
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
             }

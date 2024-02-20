@@ -1,15 +1,13 @@
 package org.texttechnologylab.mdd.data;
 
-import com.google.common.graph.EndpointPair;
-import com.google.common.graph.ImmutableGraph;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.eclipse.jetty.server.RequestLog.Collection;
+
+import com.google.common.graph.EndpointPair;
+import com.google.common.graph.ImmutableGraph;
 
 public class SentenceDataPoint implements DependencyDataPoint {
 
@@ -115,8 +113,9 @@ public class SentenceDataPoint implements DependencyDataPoint {
 
     @Override
     public double depthVariance() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'depthVariance'");
+        List<Integer> depths = this.getAllDependencyDepth(0, 0);
+        double mean = depths.stream().mapToDouble(Double::valueOf).average().getAsDouble();
+        return depths.stream().map(depth -> Math.pow(depth - mean, 2)).mapToDouble(Double::valueOf).average().getAsDouble();
     }
 
     @Override
