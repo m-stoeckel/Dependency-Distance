@@ -129,7 +129,7 @@ public class DependencyGraph {
     }
 
     private Stream<Integer> getDegreeStream() {
-        return this.dependencyGraph.nodes().stream().sorted().skip(1).map(node -> this.dependencyGraph.outDegree(node));
+        return this.dependencyGraph.nodes().stream().skip(1).map(node -> this.dependencyGraph.outDegree(node));
     }
 
     public int treeDegree() {
@@ -149,7 +149,6 @@ public class DependencyGraph {
     public double headFinalRatio() {
         return this.dependencyGraph.nodes()
             .stream()
-            .sorted()
             .skip(1)
             .map(head -> this.dependencyGraph.successors(head).stream().mapToDouble(dependent -> head > dependent ? 1. : 0.).average())
             .filter(OptionalDouble::isPresent)

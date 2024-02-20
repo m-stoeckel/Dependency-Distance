@@ -1,6 +1,7 @@
 package org.texttechnologylab.mdd.data;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import org.texttechnologylab.mdd.dependency.DependencyGraph;
 
@@ -8,6 +9,8 @@ import com.google.common.graph.ImmutableGraph;
 
 public class SentenceDataPoint {
 
+    public final ArrayList<Integer[]> dependencyEdges;
+    public final ArrayList<Integer[]> dependencyEdgesWithPunct;
     public final ArrayList<Integer> dependencyDistances;
     public final int dependencyDistanceSum;
     public final int sentenceLength;
@@ -28,6 +31,18 @@ public class SentenceDataPoint {
 
     public SentenceDataPoint(ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct) {
         DependencyGraph dg = new DependencyGraph(dependencyGraph, dependencyGraphWithPunct);
+        this.dependencyEdges =
+            dg.dependencyGraph
+                .edges()
+                .stream()
+                .map(edge -> new Integer[] { edge.source(), edge.target() })
+                .collect(Collectors.toCollection(ArrayList::new));
+        this.dependencyEdgesWithPunct =
+            dg.dependencyGraphWithPunct
+                .edges()
+                .stream()
+                .map(edge -> new Integer[] { edge.source(), edge.target() })
+                .collect(Collectors.toCollection(ArrayList::new));
         this.dependencyDistances = dg.getDependencyDistances();
         this.dependencyDistanceSum = dg.getDependencyDistanceSum();
         this.sentenceLength = dg.getSentenceLength();
