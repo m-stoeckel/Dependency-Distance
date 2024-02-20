@@ -1,13 +1,13 @@
 package org.texttechnologylab.mdd.data;
 
+import com.google.common.graph.EndpointPair;
+import com.google.common.graph.ImmutableGraph;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.OptionalDouble;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import com.google.common.graph.EndpointPair;
-import com.google.common.graph.ImmutableGraph;
 
 public class SentenceDataPoint implements DependencyDataPoint {
 
@@ -137,7 +137,7 @@ public class SentenceDataPoint implements DependencyDataPoint {
     }
 
     private Stream<Integer> getDegreeStream() {
-        return this.dependencyGraph.nodes().stream().filter(node -> node > 0).map(node -> this.dependencyGraph.outDegree(node));
+        return this.dependencyGraph.nodes().stream().sorted().skip(1).map(node -> this.dependencyGraph.outDegree(node));
     }
 
     @Override
@@ -155,5 +155,24 @@ public class SentenceDataPoint implements DependencyDataPoint {
         List<Integer> degrees = getDegreeStream().collect(Collectors.toList());
         double mean = degrees.stream().mapToDouble(Double::valueOf).average().getAsDouble();
         return degrees.stream().map(degree -> Math.pow(degree - mean, 2)).mapToDouble(Double::valueOf).average().getAsDouble();
+    }
+
+    @Override
+    public double headFinalRatio() {
+        return this.dependencyGraph.nodes()
+            .stream()
+            .sorted()
+            .skip(1)
+            .map(head -> this.dependencyGraph.successors(head).stream().mapToDouble(dependent -> head > dependent ? 1. : 0.).average())
+            .filter(OptionalDouble::isPresent)
+            .mapToDouble(OptionalDouble::getAsDouble)
+            .average()
+            .getAsDouble();
+    }
+
+    @Override
+    public int headFinalDistance() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'headFinalDistance'");
     }
 }

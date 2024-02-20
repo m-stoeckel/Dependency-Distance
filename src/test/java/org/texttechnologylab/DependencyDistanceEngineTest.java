@@ -157,6 +157,8 @@ public class DependencyDistanceEngineTest {
         int expectedTreeDegree;
         double expectedTreeDegreeMean;
         double expectedTreeDegreeVariance;
+        double headFinalRatio;
+        int headFinalDistance;
 
         public ExpectedValues(
             List<Integer> expectedDistances,
@@ -173,7 +175,9 @@ public class DependencyDistanceEngineTest {
             int expectedLeaves,
             int expectedTreeDegree,
             double expectedTreeDegreeMean,
-            double expectedTreeDegreeVariance
+            double expectedTreeDegreeVariance,
+            double headFinalRatio,
+            int headFinalDistance
         ) {
             this.expectedDistances = expectedDistances;
             this.expectedNumberOfSyntacticLinks = expectedNumberOfSyntacticLinks;
@@ -190,6 +194,8 @@ public class DependencyDistanceEngineTest {
             this.expectedTreeDegree = expectedTreeDegree;
             this.expectedTreeDegreeMean = expectedTreeDegreeMean;
             this.expectedTreeDegreeVariance = expectedTreeDegreeVariance;
+            this.headFinalRatio = headFinalRatio;
+            this.headFinalDistance = headFinalDistance;
         }
 
         @Override
@@ -271,6 +277,16 @@ public class DependencyDistanceEngineTest {
         public double treeDegreeVariance() {
             return expectedTreeDegreeVariance;
         }
+
+		@Override
+		public double headFinalRatio() {
+			return headFinalRatio;
+		}
+
+		@Override
+		public int headFinalDistance() {
+			return headFinalDistance;
+		}
     }
 
     @Test
@@ -285,6 +301,8 @@ public class DependencyDistanceEngineTest {
             0,
             2,
             6,
+            -1,
+            -1,
             -1,
             -1,
             -1,
@@ -312,7 +330,9 @@ public class DependencyDistanceEngineTest {
             3,
             3,
             0.83,
-            0.83
+            0.83,
+            0.67,
+            4
         );
         testWithValue("src/test/resources/test-geklappt.xmi", expected);
     }
@@ -411,6 +431,8 @@ public class DependencyDistanceEngineTest {
                 Assertions.assertEquals(expected.treeDegree(), sentenceDataPoint.treeDegree());
                 Assertions.assertEquals(expected.treeDegreeMean(), sentenceDataPoint.treeDegreeMean(), 0.01);
                 Assertions.assertEquals(expected.depthVariance(), sentenceDataPoint.depthVariance(), 0.01);
+
+                Assertions.assertEquals(expected.headFinalRatio(), sentenceDataPoint.headFinalRatio(), 0.01);
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
             }

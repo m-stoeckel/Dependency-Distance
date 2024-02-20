@@ -25,4 +25,7 @@ public interface DependencyDataPoint {
     int treeDegree();
     double treeDegreeMean();
     double treeDegreeVariance();
+
+    double headFinalRatio();
+    int headFinalDistance();
 }
