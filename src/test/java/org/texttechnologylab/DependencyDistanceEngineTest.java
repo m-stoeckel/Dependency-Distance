@@ -147,6 +147,7 @@ public class DependencyDistanceEngineTest {
         double expectedMDD;
         double expectedNDD;
         int expectedCrossings;
+        int expectedDependcyHeight;
 
         public ExpectedValues(
             List<Integer> expectedDistances,
@@ -155,7 +156,8 @@ public class DependencyDistanceEngineTest {
             int expectedRootDistance,
             double expectedMDD,
             double expectedNDD,
-            int expectedCrossings
+            int expectedCrossings,
+            int expectedDependcyHeight
         ) {
             this.expectedDistances = expectedDistances;
             this.expectedNumberOfSyntacticLinks = expectedNumberOfSyntacticLinks;
@@ -164,6 +166,7 @@ public class DependencyDistanceEngineTest {
             this.expectedMDD = expectedMDD;
             this.expectedNDD = expectedNDD;
             this.expectedCrossings = expectedCrossings;
+            this.expectedDependcyHeight = expectedDependcyHeight;
         }
 
         @Override
@@ -177,7 +180,7 @@ public class DependencyDistanceEngineTest {
         }
 
         @Override
-        public int getRootDistance() {
+        public int rootDistance() {
             return expectedRootDistance;
         }
 
@@ -202,20 +205,67 @@ public class DependencyDistanceEngineTest {
         }
 
         @Override
-        public int getNumberOfCrossings() {
+        public int crossings() {
             return expectedCrossings;
+        }
+
+        @Override
+        public int dependencyHeight() {
+            return expectedDependcyHeight;   
+        }
+
+        @Override
+        public double depthMean() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'depthMean'");
+        }
+
+        @Override
+        public double depthVariance() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'depthVariance'");
+        }
+
+        @Override
+        public int leaves() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'leaves'");
+        }
+
+        @Override
+        public int treeHeight() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'treeHeight'");
+        }
+
+        @Override
+        public int treeDegree() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'treeDegree'");
+        }
+
+        @Override
+        public double treeDegreeMean() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'treeDegreeMean'");
+        }
+
+        @Override
+        public double treeDegreeVariance() {
+            // TODO Auto-generated method stub
+            throw new UnsupportedOperationException("Unimplemented method 'treeDegreeVariance'");
         }
     }
 
     @Test
     public void testJumped() {
-        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 8, 9, 5, 2.125, 1.14955944251, 0);
+        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 8, 9, 5, 2.125, 1.14955944251, 0, 6);
         testWithValue("src/test/resources/test-jumped.xmi", expected);
     }
 
     @Test
     public void testGeklappt() {
-        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 5, 6, 6, 2.6, 0.8362480242, 1);
+        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 5, 6, 6, 2.6, 0.8362480242, 1, 13);
         testWithValue("src/test/resources/test-geklappt.xmi", expected);
     }
 
@@ -298,11 +348,13 @@ public class DependencyDistanceEngineTest {
                 Assertions.assertEquals(expected.getDependencyDistanceSum(), sentenceDataPoint.getDependencyDistanceSum());
                 Assertions.assertEquals(expected.getSentenceLength(), sentenceDataPoint.getSentenceLength());
                 Assertions.assertEquals(expected.getNumberOfSyntacticLinks(), sentenceDataPoint.getNumberOfSyntacticLinks());
-                Assertions.assertEquals(expected.getRootDistance(), sentenceDataPoint.getRootDistance());
+                Assertions.assertEquals(expected.rootDistance(), sentenceDataPoint.rootDistance());
                 
                 final double eps = 0.00001;
                 Assertions.assertTrue(Math.abs(expected.mdd() - sentenceDataPoint.mdd()) < eps);
                 Assertions.assertTrue(Math.abs(expected.ndd() - sentenceDataPoint.ndd()) < eps);
+
+                Assertions.assertEquals(expected.dependencyHeight(), sentenceDataPoint.dependencyHeight());
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
             }

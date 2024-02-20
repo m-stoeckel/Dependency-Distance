@@ -4,6 +4,7 @@ import com.google.common.graph.EndpointPair;
 import com.google.common.graph.ImmutableGraph;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SentenceDataPoint implements DependencyDataPoint {
@@ -33,7 +34,7 @@ public class SentenceDataPoint implements DependencyDataPoint {
     }
 
     @Override
-    public int getRootDistance() {
+    public int rootDistance() {
         return this.dependencyGraph.successors(0).stream().findFirst().get();
     }
 
@@ -67,11 +68,11 @@ public class SentenceDataPoint implements DependencyDataPoint {
 
     @Override
     public double ndd() {
-        return Math.abs(Math.log(this.mdd() / Math.sqrt(this.getRootDistance() * this.getSentenceLength())));
+        return Math.abs(Math.log(this.mdd() / Math.sqrt(this.rootDistance() * this.getSentenceLength())));
     }
 
     @Override
-    public int getNumberOfCrossings() {
+    public int crossings() {
         return this.dependencyGraph.edges().stream().map(edge -> this.getNumberOfCrossings(edge)).reduce(0, (a, b) -> a + b);
     }
 
@@ -81,5 +82,58 @@ public class SentenceDataPoint implements DependencyDataPoint {
             .map(v -> (u.source() < v.source() && u.target() > v.target()) || (u.source() > v.source() && u.target() < v.target()))
             .map(b -> b ? 1 : 0)
             .reduce(0, (a, b) -> a + b);
+    }
+
+    @Override
+    public int dependencyHeight() {
+        return this.getDependencyHeight(0);
+    }
+
+    private int getDependencyHeight(Integer node) {
+        return this.dependencyGraph.successors(node).stream().map(
+            successor -> Math.abs(node - successor) + this.getDependencyHeight(successor)
+        ).max(Comparator.naturalOrder()).orElse(0);
+    }
+
+    @Override
+    public double depthMean() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'depthMean'");
+    }
+
+    @Override
+    public double depthVariance() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'depthVariance'");
+    }
+
+    @Override
+    public int leaves() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'leaves'");
+    }
+
+    @Override
+    public int treeHeight() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'treeHeight'");
+    }
+
+    @Override
+    public int treeDegree() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'treeDegree'");
+    }
+
+    @Override
+    public double treeDegreeMean() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'treeDegreeMean'");
+    }
+
+    @Override
+    public double treeDegreeVariance() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'treeDegreeVariance'");
     }
 }
