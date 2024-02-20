@@ -81,7 +81,7 @@ public class SentenceDataPoint implements DependencyDataPoint {
     private int getNumberOfCrossings(EndpointPair<Integer> u) {
         return (int) this.dependencyGraph.edges()
             .stream()
-            .map(v -> (u.source() < v.source() && u.target() > v.target()) || (u.source() > v.source() && u.target() < v.target()))
+            .map(v -> (u.source() < v.source() && u.target() < v.target()) || (u.source() > v.source() && u.target() > v.target()))
             .map(b -> b ? 1 : 0)
             .reduce(0, (a, b) -> a + b);
     }
@@ -99,21 +99,20 @@ public class SentenceDataPoint implements DependencyDataPoint {
             .orElse(0);
     }
 
-    @Override
-    public double depthMean() {
-        return this.getAllDependencyDepth(0, 0).stream().mapToDouble(Double::valueOf).average().getAsDouble();
-    }
-
-    private List<Integer> getAllDependencyDepth(Integer node, int depth) {
+    private Stream<Integer> getDependencyDepthStream(Integer node, int depth) {
         return this.dependencyGraph.successors(node)
             .stream()
-            .flatMap(successor -> Stream.concat(Stream.of(depth), this.getAllDependencyDepth(successor, depth + 1).stream()))
-            .collect(Collectors.toList());
+            .flatMap(successor -> Stream.concat(Stream.of(depth), this.getDependencyDepthStream(successor, depth + 1)));
+    }
+
+    @Override
+    public double depthMean() {
+        return this.getDependencyDepthStream(0, 0).mapToDouble(Double::valueOf).average().getAsDouble();
     }
 
     @Override
     public double depthVariance() {
-        List<Integer> depths = this.getAllDependencyDepth(0, 0);
+        List<Integer> depths = this.getDependencyDepthStream(0, 0).collect(Collectors.toList());
         double mean = depths.stream().mapToDouble(Double::valueOf).average().getAsDouble();
         return depths.stream().map(depth -> Math.pow(depth - mean, 2)).mapToDouble(Double::valueOf).average().getAsDouble();
     }
@@ -134,24 +133,27 @@ public class SentenceDataPoint implements DependencyDataPoint {
 
     @Override
     public int treeHeight() {
-        return this.getAllDependencyDepth(0, 1).stream().max(Comparator.naturalOrder()).get();
+        return this.getDependencyDepthStream(0, 1).max(Comparator.naturalOrder()).get();
+    }
+
+    private Stream<Integer> getDegreeStream() {
+        return this.dependencyGraph.nodes().stream().filter(node -> node > 0).map(node -> this.dependencyGraph.outDegree(node));
     }
 
     @Override
     public int treeDegree() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'treeDegree'");
+        return getDegreeStream().max(Comparator.naturalOrder()).get();
     }
 
     @Override
     public double treeDegreeMean() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'treeDegreeMean'");
+        return getDegreeStream().mapToDouble(Double::valueOf).average().getAsDouble();
     }
 
     @Override
     public double treeDegreeVariance() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'treeDegreeVariance'");
+        List<Integer> degrees = getDegreeStream().collect(Collectors.toList());
+        double mean = degrees.stream().mapToDouble(Double::valueOf).average().getAsDouble();
+        return degrees.stream().map(degree -> Math.pow(degree - mean, 2)).mapToDouble(Double::valueOf).average().getAsDouble();
     }
 }

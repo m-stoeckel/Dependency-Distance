@@ -154,6 +154,9 @@ public class DependencyDistanceEngineTest {
         double expectedDepthMean;
         double expectedDepthVariance;
         int expectedLeaves;
+        int expectedTreeDegree;
+        double expectedTreeDegreeMean;
+        double expectedTreeDegreeVariance;
 
         public ExpectedValues(
             List<Integer> expectedDistances,
@@ -167,7 +170,10 @@ public class DependencyDistanceEngineTest {
             int expectedDependcyHeight,
             double expectedDepthMean,
             double expectedDepthVariance,
-            int expectedLeaves
+            int expectedLeaves,
+            int expectedTreeDegree,
+            double expectedTreeDegreeMean,
+            double expectedTreeDegreeVariance
         ) {
             this.expectedDistances = expectedDistances;
             this.expectedNumberOfSyntacticLinks = expectedNumberOfSyntacticLinks;
@@ -181,6 +187,9 @@ public class DependencyDistanceEngineTest {
             this.expectedDepthMean = expectedDepthMean;
             this.expectedDepthVariance = expectedDepthVariance;
             this.expectedLeaves = expectedLeaves;
+            this.expectedTreeDegree = expectedTreeDegree;
+            this.expectedTreeDegreeMean = expectedTreeDegreeMean;
+            this.expectedTreeDegreeVariance = expectedTreeDegreeVariance;
         }
 
         @Override
@@ -250,32 +259,61 @@ public class DependencyDistanceEngineTest {
 
         @Override
         public int treeDegree() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'treeDegree'");
+            return expectedTreeDegree;
         }
 
         @Override
         public double treeDegreeMean() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'treeDegreeMean'");
+            return expectedTreeDegreeMean;
         }
 
         @Override
         public double treeDegreeVariance() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'treeDegreeVariance'");
+            return expectedTreeDegreeVariance;
         }
     }
 
     @Test
     public void testJumped() {
-        ExpectedValues expected = new ExpectedValues(List.of(3, 2, 1, 1, 3, 2, 1, 4), 8, 9, 5, 2.125, 1.14955944251, 0, 2, 6, -1, -1, -1);
+        ExpectedValues expected = new ExpectedValues(
+            List.of(3, 2, 1, 1, 3, 2, 1, 4),
+            8,
+            9,
+            5,
+            2.125,
+            1.14955944251,
+            0,
+            2,
+            6,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1,
+            -1
+        );
         testWithValue("src/test/resources/test-jumped.xmi", expected);
     }
 
     @Test
     public void testGeklappt() {
-        ExpectedValues expected = new ExpectedValues(List.of(5, 4, 2, 1, 1), 5, 6, 6, 2.6, 0.8362480242, 1, 3, 13, 1.17, 0.47, 3);
+        ExpectedValues expected = new ExpectedValues(
+            List.of(5, 4, 2, 1, 1),
+            5,
+            6,
+            6,
+            2.6,
+            0.8362480242,
+            1,
+            3,
+            13,
+            1.17,
+            0.47,
+            3,
+            3,
+            0.83,
+            0.83
+        );
         testWithValue("src/test/resources/test-geklappt.xmi", expected);
     }
 
@@ -369,12 +407,17 @@ public class DependencyDistanceEngineTest {
                 Assertions.assertEquals(expected.depthVariance(), sentenceDataPoint.depthVariance(), 0.01);
 
                 Assertions.assertEquals(expected.leaves(), sentenceDataPoint.leaves());
+
+                Assertions.assertEquals(expected.treeDegree(), sentenceDataPoint.treeDegree());
+                Assertions.assertEquals(expected.treeDegreeMean(), sentenceDataPoint.treeDegreeMean(), 0.01);
+                Assertions.assertEquals(expected.depthVariance(), sentenceDataPoint.depthVariance(), 0.01);
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
             }
 
             Assertions.assertTrue(true);
         } catch (Exception e) {
+            System.err.printf("[EXCEPTION] ");
             e.printStackTrace();
             Assertions.fail();
         }
