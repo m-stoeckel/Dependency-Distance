@@ -2,12 +2,14 @@ package org.texttechnologylab.mdd.data;
 
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.Traverser;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.OptionalDouble;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.text.similarity.LevenshteinDistance;
 
 public class SentenceDataPoint implements DependencyDataPoint {
 
@@ -172,7 +174,22 @@ public class SentenceDataPoint implements DependencyDataPoint {
 
     @Override
     public int headFinalDistance() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'headFinalDistance'");
+        Integer root = this.dependencyGraph.successors(0).stream().findFirst().get();
+        final ArrayList<Integer> traversalOrder = new ArrayList<>(this.dependencyGraph.nodes().size() - 1);
+        Traverser.forGraph(this.dependencyGraphWithPunct).depthFirstPostOrder(root).forEach(node -> traversalOrder.add(node));
+
+        final ArrayList<Integer> orignalOrder = new ArrayList<>(traversalOrder);
+        orignalOrder.sort(Comparator.naturalOrder());
+
+        char[] originalCharacters = new char[orignalOrder.size()];
+        char[] traversalCharacters = new char[traversalOrder.size()];
+        for (int i = 0; i < traversalOrder.size(); i++) {
+            originalCharacters[i] = (char) (orignalOrder.get(i).intValue());
+            traversalCharacters[i] = (char) (traversalOrder.get(i).intValue());
+        }
+
+        int distance = new LevenshteinDistance().apply(new String(originalCharacters), new String(traversalCharacters));
+
+        return distance;
     }
 }
