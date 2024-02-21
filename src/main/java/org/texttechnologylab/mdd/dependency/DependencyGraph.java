@@ -19,8 +19,11 @@ public class DependencyGraph {
     public final ImmutableGraph<Integer> dependencyGraph;
     public final ImmutableGraph<Integer> dependencyGraphWithPunct;
 
-    public DependencyGraph(ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct) {
-        assert dependencyGraph.outDegree(0) == 1;
+    public DependencyGraph(ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct) throws InvalidDependencyGraphException {
+        if (dependencyGraph.outDegree(0) < 0) {
+            throw new InvalidDependencyGraphException("Dependency graph is empty!");
+        }
+
         this.dependencyGraph = dependencyGraph;
         this.dependencyGraphWithPunct = dependencyGraphWithPunct;
     }

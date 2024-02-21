@@ -38,6 +38,7 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.tcas.Annotation;
 import org.texttechnologylab.mdd.data.DocumentDataPoint;
 import org.texttechnologylab.mdd.data.SentenceDataPoint;
+import org.texttechnologylab.mdd.dependency.InvalidDependencyGraphException;
 
 public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
@@ -140,7 +141,11 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
                 continue;
             }
 
-            documentDataPoint.add(processDependencies(new ArrayList<>(dependencyMap.get(sentence))));
+            try {
+                documentDataPoint.add(processDependencies(new ArrayList<>(dependencyMap.get(sentence))));
+            } catch (InvalidDependencyGraphException ignored) {
+                // Catch exception for invalid sentences
+            }
         }
     }
 
@@ -163,7 +168,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
         return true;
     }
 
-    private SentenceDataPoint processDependencies(final ArrayList<Dependency> dependencies) {
+    private SentenceDataPoint processDependencies(final ArrayList<Dependency> dependencies) throws InvalidDependencyGraphException {
         dependencies.sort(Comparator.comparingInt(o -> o.getDependent().getBegin()));
         ArrayList<Token> tokens = dependencies
             .stream()
@@ -195,7 +200,7 @@ public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
 
         edges.forEach(edge -> graphBuilder.putEdge(edge.source(), edge.target()));
         ImmutableGraph<Integer> dependencyGraphWithPunct = graphBuilder.build();
-        
+
         return new SentenceDataPoint(dependencyGraph, dependencyGraphWithPunct);
     }
 
