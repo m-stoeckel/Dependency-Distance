@@ -1,4 +1,4 @@
-package org.texttechnologylab.mdd.data;
+package org.texttechnologylab.dependency.data;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

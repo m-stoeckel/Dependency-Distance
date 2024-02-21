@@ -26,10 +26,10 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIUIMADriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.DUUIAsynchronousProcessor;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
+import org.texttechnologylab.dependency.data.DocumentDataPoint;
+import org.texttechnologylab.dependency.data.SentenceDataPoint;
+import org.texttechnologylab.dependency.engine.DependencyDistanceEngine;
 import org.texttechnologylab.engine.DummyEngine;
-import org.texttechnologylab.mdd.data.DocumentDataPoint;
-import org.texttechnologylab.mdd.data.SentenceDataPoint;
-import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
 
 import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;

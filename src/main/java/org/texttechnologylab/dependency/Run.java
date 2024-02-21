@@ -1,3 +1,4 @@
+package org.texttechnologylab.dependency;
 // package org.texttechnologylab.mdd;
 
 // import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;

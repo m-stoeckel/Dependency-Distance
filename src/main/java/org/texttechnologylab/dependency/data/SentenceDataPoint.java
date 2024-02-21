@@ -1,10 +1,12 @@
-package org.texttechnologylab.mdd.data;
+package org.texttechnologylab.dependency.data;
 
-import com.google.common.graph.ImmutableGraph;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
-import org.texttechnologylab.mdd.dependency.DependencyGraph;
-import org.texttechnologylab.mdd.dependency.InvalidDependencyGraphException;
+
+import org.texttechnologylab.dependency.graph.DependencyGraph;
+import org.texttechnologylab.dependency.graph.InvalidDependencyGraphException;
+
+import com.google.common.graph.ImmutableGraph;
 
 public class SentenceDataPoint {
 

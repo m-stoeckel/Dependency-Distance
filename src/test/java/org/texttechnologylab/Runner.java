@@ -15,7 +15,7 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.io.DUUIAsynchronousProce
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.DUUICollectionReader;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
-import org.texttechnologylab.mdd.engine.DependencyDistanceEngine;
+import org.texttechnologylab.dependency.engine.DependencyDistanceEngine;
 import org.texttechnologylab.parliament.duui.DUUIGerParCorReader;
 
 import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;

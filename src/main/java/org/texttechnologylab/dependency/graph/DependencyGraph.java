@@ -1,4 +1,4 @@
-package org.texttechnologylab.mdd.dependency;
+package org.texttechnologylab.dependency.graph;
 
 import java.util.ArrayList;
 import java.util.Comparator;

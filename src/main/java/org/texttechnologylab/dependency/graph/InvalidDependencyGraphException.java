@@ -1,4 +1,4 @@
-package org.texttechnologylab.mdd.dependency;
+package org.texttechnologylab.dependency.graph;
 
 public class InvalidDependencyGraphException extends Exception {
 
