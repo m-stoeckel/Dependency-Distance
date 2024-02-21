@@ -30,7 +30,10 @@ public class Runner {
             int pScale = Integer.parseInt(System.getProperty("scale", "8"));
             int pPoolsize = Integer.parseInt(System.getProperty("poolsize", "16"));
 
-            String pOutput = System.getProperty("output", "/storage/projects/stoeckel/syntactic-language-change/mdd/");
+            String pOutput = System.getProperty("output");
+            if (Objects.isNull(pOutput)) {
+                throw new IllegalArgumentException("-Doutput must be given!");
+            }
             boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 
@@ -122,7 +125,10 @@ public class Runner {
             int pScale = Integer.parseInt(System.getProperty("scale", "8"));
             int pPoolsize = Integer.parseInt(System.getProperty("poolsize", "16"));
 
-            String pOutput = System.getProperty("output", "/tmp/mdd/");
+            String pOutput = System.getProperty("output");
+            if (Objects.isNull(pOutput)) {
+                throw new IllegalArgumentException("-Doutput must be given!");
+            }
             boolean pOverwrite = Boolean.parseBoolean(System.getProperty("overwrite", "false"));
             CompressionMethod pCompression = CompressionMethod.valueOf(System.getProperty("compression", "NONE"));
 

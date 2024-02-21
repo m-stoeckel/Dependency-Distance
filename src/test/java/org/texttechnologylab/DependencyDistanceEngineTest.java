@@ -318,7 +318,7 @@ public class DependencyDistanceEngineTest {
                     if (dep instanceof PUNCT || dependencyType.equalsIgnoreCase("PUNCT")) continue;
 
                     System.out.printf(
-                        "  %-6s %d -> %-6s %d = %d\n",
+                        "  %-6s %d <- %-6s %d = %d\n",
                         dependent.getCoveredText(),
                         tokens.indexOf(dependent) + 1,
                         dep instanceof ROOT ? "ROOT" : governor.getCoveredText(),
@@ -423,7 +423,7 @@ public class DependencyDistanceEngineTest {
     // continue;
 
     // System.out.printf(
-    // " %-6s %d -> %-6s %d = %d\n",
+    // " %-6s %d <- %-6s %d = %d\n",
     // dependent.getCoveredText(),
     // tokens.indexOf(dependent) + 1,
     // dep instanceof ROOT ? "ROOT" : governor.getCoveredText(),
