@@ -25,6 +25,18 @@ public class DocumentDataPoint {
     protected final TreeMap<String, String> documentMetaData;
     protected final ArrayList<SentenceDataPoint> sentences;
 
+    public DocumentDataPoint() {
+        this.documentAnnotation = new TreeMap<>();
+        this.documentMetaData = new TreeMap<>();
+        this.sentences = new ArrayList<>();
+    }
+
+    public DocumentDataPoint(TreeMap<String, String> documentAnnotation, TreeMap<String, String> documentMetaData) {
+        this.documentAnnotation = documentAnnotation;
+        this.documentMetaData = documentMetaData;
+        this.sentences = new ArrayList<>();
+    }
+
     public DocumentDataPoint(DocumentAnnotation documentAnnotation, DocumentMetaData documentMetaData) {
         this.documentAnnotation = featureMap(documentAnnotation);
         this.documentMetaData = featureMap(documentMetaData);
