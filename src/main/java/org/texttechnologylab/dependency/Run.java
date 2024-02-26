@@ -1,5 +1,15 @@
 package org.texttechnologylab.dependency;
 
+import com.google.common.collect.Streams;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.ImmutableGraph.Builder;
+import com.google.gson.Gson;
+import com.google.gson.TypeAdapter;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -24,23 +34,10 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.dkpro.core.api.resources.CompressionUtils;
 import org.texttechnologylab.dependency.data.DocumentDataPoint;
 import org.texttechnologylab.dependency.data.SentenceDataPoint;
 import org.texttechnologylab.dependency.graph.InvalidDependencyGraphException;
-
-import com.google.common.collect.Streams;
-import com.google.common.graph.GraphBuilder;
-import com.google.common.graph.ImmutableGraph;
-import com.google.common.graph.ImmutableGraph.Builder;
-import com.google.gson.Gson;
-import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 
 public class Run {
 
@@ -96,72 +93,77 @@ public class Run {
             })
             .collect(Collectors.toCollection(ArrayList::new));
 
-        try {
             for (String fileName : inputFiles) {
-                try {
-                    Path inputPath = Paths.get(fileName);
-                    File outputFile = Paths.get(outputPath, inputPath.getFileName().toString() + pCompression.getExtension()).toFile();
-                    if (outputFile.exists() && !pOverwrite) {
-                        throw new IllegalArgumentException(
-                            String.format("Output file '%s' already exists and overwrite is disabled", outputFile)
-                        );
+                process(fileName, outputPath, pOverwrite, fFailOnError, pCompression);
+            }
+    }
+
+    private static void process(
+        String fileName,
+        String outputPath,
+        final boolean pOverwrite,
+        final boolean pFailOnError,
+        final CompressionMethod pCompression
+    ) {
+        try {
+            Path inputPath = Paths.get(fileName);
+            File outputFile = Paths.get(outputPath, inputPath.getFileName().toString() + pCompression.getExtension()).toFile();
+            if (outputFile.exists() && !pOverwrite) {
+                throw new IllegalArgumentException(String.format("Output file '%s' already exists and overwrite is disabled", outputFile));
+            }
+
+            String parser = inputPath.toFile().getParentFile().getName();
+            String dateYear = inputPath.toFile().getName().split("\\.")[0];
+            String documentId = "Bundestag/" + dateYear;
+            String documentUri = "DeuParl/" + parser + "/" + documentId;
+
+            GraphIterator graphIterator = new GraphIterator(Files.newBufferedReader(inputPath));
+            ArrayList<SentenceDataPoint> sentenceDataPoints = Streams
+                .stream(graphIterator)
+                .parallel()
+                .map(graph -> {
+                    try {
+                        return Optional.<SentenceDataPoint>of(getSentenceDataPoint(graph));
+                    } catch (InvalidDependencyGraphException e) {
+                        if (pFailOnError) {
+                            throw new RuntimeException(e);
+                        }
                     }
+                    return Optional.<SentenceDataPoint>empty();
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toCollection(ArrayList::new));
 
-                    String parser = inputPath.toFile().getParentFile().getName();
-                    String dateYear = inputPath.toFile().getName().split("\\.")[0];
-                    String documentId = "Bundestag/" + dateYear;
-                    String documentUri = "DeuParl/" + parser + "/" + documentId;
+            DocumentDataPoint documentDataPoint = new DocumentDataPoint(
+                new TreeMap<>(Map.of("file", fileName, "dateYear", dateYear)),
+                new TreeMap<>(Map.of("documentId", documentId, "documentUri", documentUri)),
+                sentenceDataPoints
+            );
 
-                    GraphIterator graphIterator = new GraphIterator(Files.newBufferedReader(inputPath));
-                    ArrayList<SentenceDataPoint> sentenceDataPoints = Streams
-                        .stream(graphIterator)
-                        .parallel()
-                        .map(graph -> {
-                            try {
-                                return Optional.<SentenceDataPoint>of(getSentenceDataPoint(graph));
-                            } catch (InvalidDependencyGraphException e) {
-                                if (fFailOnError) {
-                                    throw new RuntimeException(e);
-                                }
-                            }
-                            return Optional.<SentenceDataPoint>empty();
-                        })
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .collect(Collectors.toCollection(ArrayList::new));
+            System.out.printf(
+                "Processed %d/%d graphs from '%s'%n",
+                documentDataPoint.getSentences().size(),
+                graphIterator.count(),
+                inputPath.toString()
+            );
 
-                    DocumentDataPoint documentDataPoint = new DocumentDataPoint(
-                        new TreeMap<>(Map.of("file", fileName, "dateYear", dateYear)),
-                        new TreeMap<>(Map.of("documentId", documentId, "documentUri", documentUri)),
-                        sentenceDataPoints
-                    );
+            try (
+                BufferedWriter writer = new BufferedWriter(
+                    new OutputStreamWriter(CompressionUtils.getOutputStream(outputFile), StandardCharsets.UTF_8)
+                )
+            ) {
+                writer.write(new Gson().toJson(documentDataPoint));
 
-                    System.out.printf(
-                        "Processed %d/%d graphs from '%s'%n",
-                        documentDataPoint.getSentences().size(),
-                        graphIterator.count(),
-                        inputPath.toString()
-                    );
-
-                    try (
-                        BufferedWriter writer = new BufferedWriter(
-                            new OutputStreamWriter(CompressionUtils.getOutputStream(outputFile), StandardCharsets.UTF_8)
-                        )
-                    ) {
-                        writer.write(new Gson().toJson(documentDataPoint));
-
-                        System.out.printf("Wrote data %d points to '%s'%n", documentDataPoint.getSentences().size(), inputPath.toString());
-                    }
-                } catch (Exception e) {
-                    if (pFailOnError) {
-                        throw e;
-                    } else {
-                        e.printStackTrace();
-                    }
-                }
+                System.out.printf("Wrote data %d points to '%s'%n", documentDataPoint.getSentences().size(), inputPath.toString());
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            if (pFailOnError) {
+                throw new RuntimeException(e);
+            } else {
+                System.err.printf("Exception while processing '%s':%n", fileName);
+                e.printStackTrace();
+            }
         }
     }
 
