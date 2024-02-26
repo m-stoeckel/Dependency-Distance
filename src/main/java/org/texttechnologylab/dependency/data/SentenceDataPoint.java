@@ -29,6 +29,7 @@ public class SentenceDataPoint {
     public final double treeDegreeVariance;
     public final double headFinalRatio;
     public final int headFinalDistance;
+    public final int crossings;
 
     public SentenceDataPoint(ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct)
         throws InvalidDependencyGraphException {
@@ -64,6 +65,7 @@ public class SentenceDataPoint {
             this.treeDegreeVariance = dg.treeDegreeVariance();
             this.headFinalRatio = dg.headFinalRatio();
             this.headFinalDistance = dg.headFinalDistance();
+            this.crossings = dg.crossings();
         } catch (Exception e) {
             throw new InvalidDependencyGraphException("An exception occurred while calculating metrics!", e);
         }
