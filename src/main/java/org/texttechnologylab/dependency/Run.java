@@ -6,9 +6,14 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -18,6 +23,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.dkpro.core.api.resources.CompressionUtils;
 import org.texttechnologylab.dependency.data.DocumentDataPoint;
@@ -70,8 +76,28 @@ public class Run {
         String outputPath = fileList.remove(fileList.size() - 1);
         final boolean fFailOnError = pFailOnError;
 
+        ArrayList<String> inputFiles = fileList
+            .stream()
+            .flatMap((String path) -> {
+                File file = Paths.get(path).toFile();
+                if (file.isDirectory()) {
+                    return Stream.of(file.listFiles()).map(File::getAbsolutePath);
+                }
+                if (path.contains("*")) {
+                    final GlobVisitor visitor = new GlobVisitor(path);
+                    try {
+                        Files.walkFileTree(file.getParentFile().toPath(), visitor);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return visitor.stream();
+                }
+                return Stream.of(path);
+            })
+            .collect(Collectors.toCollection(ArrayList::new));
+
         try {
-            for (String fileName : fileList) {
+            for (String fileName : inputFiles) {
                 try {
                     Path inputPath = Paths.get(fileName);
                     File outputFile = Paths.get(outputPath, inputPath.getFileName().toString() + pCompression.getExtension()).toFile();
@@ -123,6 +149,8 @@ public class Run {
                         )
                     ) {
                         writer.write(new Gson().toJson(documentDataPoint));
+
+                        System.out.printf("Wrote data %d points to '%s'%n", documentDataPoint.getSentences().size(), inputPath.toString());
                     }
                 } catch (Exception e) {
                     if (pFailOnError) {
@@ -137,10 +165,32 @@ public class Run {
         }
     }
 
+    private static class GlobVisitor extends SimpleFileVisitor<Path> {
+
+        final ArrayList<String> innerList = new ArrayList<>();
+        final PathMatcher matcher;
+
+        public GlobVisitor(final String pattern) {
+            this.matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
+        }
+
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+            if (this.matcher.matches(file)) {
+                innerList.add(file.toString());
+            }
+            return FileVisitResult.CONTINUE;
+        }
+
+        public Stream<String> stream() {
+            return innerList.stream();
+        }
+    }
+
     /**
      * Iterator for reading a list of graphs from a JSON file.
      *
      * The graphs are expected to be in the following format:
+     *
      * <pre>
      *[
      *  [
@@ -205,16 +255,17 @@ public class Run {
 
     private static SentenceDataPoint getSentenceDataPoint(ArrayList<Integer[][]> graph) throws InvalidDependencyGraphException {
         Builder<Integer> graphBuilder = GraphBuilder.directed().<Integer>immutable().addNode(0);
+
         for (Integer[] edge : graph.get(0)) {
             graphBuilder.putEdge(edge[0], edge[1]);
         }
         ImmutableGraph<Integer> dependencyGraph = graphBuilder.build();
+
         for (Integer[] edge : graph.get(1)) {
             graphBuilder.putEdge(edge[0], edge[1]);
         }
         ImmutableGraph<Integer> dependencyGraphWithPunct = graphBuilder.build();
 
-        SentenceDataPoint sentenceDataPoint = new SentenceDataPoint(dependencyGraph, dependencyGraphWithPunct);
-        return sentenceDataPoint;
+        return new SentenceDataPoint(dependencyGraph, dependencyGraphWithPunct);
     }
 }
