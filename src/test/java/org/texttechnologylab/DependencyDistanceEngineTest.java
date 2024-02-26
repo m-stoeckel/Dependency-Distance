@@ -3,13 +3,18 @@ package org.texttechnologylab;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngine;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
+import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Optional;
 import org.apache.uima.analysis_component.AnalysisComponent;
 import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.analysis_engine.impl.PrimitiveAnalysisEngine_impl;
@@ -30,12 +35,6 @@ import org.texttechnologylab.dependency.data.DocumentDataPoint;
 import org.texttechnologylab.dependency.data.SentenceDataPoint;
 import org.texttechnologylab.dependency.engine.DependencyDistanceEngine;
 import org.texttechnologylab.engine.DummyEngine;
-
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
 
 public class DependencyDistanceEngineTest {
 
@@ -141,46 +140,47 @@ public class DependencyDistanceEngineTest {
 
     class ExpectedValues {
 
-        public final List<Integer> expectedDependencyDistances;
-        public final int expectedDependencyDistanceSum;
-        public final int expectedNumberOfSyntacticLinks;
-        public final int expectedSentenceLength;
-        public final int expectedRootDistance;
-        public final double expectedMDD;
-        public final double expectedNDD;
-        public final int expectedCrossings;
-        public final int expectedTreeHeight;
-        public final int expectedDependencyHeight;
-        public final double expectedDepthMean;
-        public final double expectedDepthVariance;
-        public final int expectedLeaves;
-        public final int expectedTreeDegree;
-        public final double expectedTreeDegreeMean;
-        public final double expectedTreeDegreeVariance;
-        public final double headFinalRatio;
-        public final int headFinalDistance;
+        public final Optional<List<Integer>> expectedDependencyDistances;
+        public final Optional<Integer> expectedDependencyDistanceSum;
+        public final Optional<Integer> expectedNumberOfSyntacticLinks;
+        public final Optional<Integer> expectedSentenceLength;
+        public final Optional<Integer> expectedRootDistance;
+        public final Optional<Double> expectedMDD;
+        public final Optional<Double> expectedNDD;
+        public final Optional<Integer> expectedCrossings;
+        public final Optional<Integer> expectedTreeHeight;
+        public final Optional<Integer> expectedDependencyHeight;
+        public final Optional<Double> expectedDepthMean;
+        public final Optional<Double> expectedDepthVariance;
+        public final Optional<Integer> expectedLeaves;
+        public final Optional<Integer> expectedTreeDegree;
+        public final Optional<Double> expectedTreeDegreeMean;
+        public final Optional<Double> expectedTreeDegreeVariance;
+        public final Optional<Double> headFinalRatio;
+        public final Optional<Integer> headFinalDistance;
 
         public ExpectedValues(
-            List<Integer> expectedDistances,
-            int expectedNumberOfSyntacticLinks,
-            int expectedSentenceLength,
-            int expectedRootDistance,
-            double expectedMDD,
-            double expectedNDD,
-            int expectedCrossings,
-            int expectedTreeHeight,
-            int expectedDependencyHeight,
-            double expectedDepthMean,
-            double expectedDepthVariance,
-            int expectedLeaves,
-            int expectedTreeDegree,
-            double expectedTreeDegreeMean,
-            double expectedTreeDegreeVariance,
-            double headFinalRatio,
-            int headFinalDistance
+            Optional<List<Integer>> expectedDistances,
+            Optional<Integer> expectedNumberOfSyntacticLinks,
+            Optional<Integer> expectedSentenceLength,
+            Optional<Integer> expectedRootDistance,
+            Optional<Double> expectedMDD,
+            Optional<Double> expectedNDD,
+            Optional<Integer> expectedCrossings,
+            Optional<Integer> expectedTreeHeight,
+            Optional<Integer> expectedDependencyHeight,
+            Optional<Double> expectedDepthMean,
+            Optional<Double> expectedDepthVariance,
+            Optional<Integer> expectedLeaves,
+            Optional<Integer> expectedTreeDegree,
+            Optional<Double> expectedTreeDegreeMean,
+            Optional<Double> expectedTreeDegreeVariance,
+            Optional<Double> headFinalRatio,
+            Optional<Integer> headFinalDistance
         ) {
             this.expectedDependencyDistances = expectedDistances;
-            this.expectedDependencyDistanceSum = expectedDistances.stream().reduce(0, (a, b) -> a + b);
+            this.expectedDependencyDistanceSum =
+                expectedDistances.isPresent() ? Optional.empty() : Optional.of(expectedDistances.get().stream().reduce(0, (a, b) -> a + b));
             this.expectedNumberOfSyntacticLinks = expectedNumberOfSyntacticLinks;
             this.expectedSentenceLength = expectedSentenceLength;
             this.expectedRootDistance = expectedRootDistance;
@@ -203,23 +203,23 @@ public class DependencyDistanceEngineTest {
     @Test
     public void testJumped() {
         ExpectedValues expected = new ExpectedValues(
-            List.of(3, 2, 1, 1, 3, 2, 1, 4),
-            8,
-            9,
-            5,
-            2.125,
-            1.14955944251,
-            0,
-            2,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1,
-            -1
+            Optional.of(List.of(3, 2, 1, 1, 3, 2, 1, 4)),
+            Optional.of(8),
+            Optional.of(9),
+            Optional.of(5),
+            Optional.of(2.125),
+            Optional.of(1.14955944251),
+            Optional.of(0),
+            Optional.of(2),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty(),
+            Optional.empty()
         );
         try {
             testWithValue("src/test/resources/test-jumped.xmi", expected);
@@ -231,23 +231,23 @@ public class DependencyDistanceEngineTest {
     @Test
     public void testGeklappt() {
         ExpectedValues expected = new ExpectedValues(
-            List.of(5, 4, 2, 1, 1),
-            5,
-            6,
-            6,
-            2.6,
-            0.8362480242,
-            1,
-            3,
-            13,
-            1.17,
-            0.47,
-            3,
-            3,
-            0.83,
-            1.139,
-            0.67,
-            4
+            Optional.of(List.of(5, 4, 2, 1, 1)),
+            Optional.of(5),
+            Optional.of(6),
+            Optional.of(6),
+            Optional.of(2.6),
+            Optional.of(0.8362480242),
+            Optional.of(1),
+            Optional.of(3),
+            Optional.of(13),
+            Optional.of(1.17),
+            Optional.of(0.47),
+            Optional.of(3),
+            Optional.of(3),
+            Optional.of(0.83),
+            Optional.of(1.139),
+            Optional.of(0.67),
+            Optional.of(4)
         );
         testWithValue("src/test/resources/test-geklappt.xmi", expected);
     }
@@ -327,28 +327,75 @@ public class DependencyDistanceEngineTest {
                     );
                 }
 
-                Assertions.assertEquals(expected.expectedDependencyDistances, dependencyDistances);
-                Assertions.assertEquals(expected.expectedDependencyDistanceSum, sentenceDataPoint.dependencyDistanceSum);
-                Assertions.assertEquals(expected.expectedSentenceLength, sentenceDataPoint.sentenceLength);
-                Assertions.assertEquals(expected.expectedNumberOfSyntacticLinks, sentenceDataPoint.numberOfSyntacticLinks);
-                Assertions.assertEquals(expected.expectedRootDistance, sentenceDataPoint.rootDistance);
-                Assertions.assertEquals(expected.expectedDependencyHeight, sentenceDataPoint.dependencyHeight);
+                if (expected.expectedDependencyDistances.isPresent()) Assertions.assertEquals(
+                    expected.expectedDependencyDistances.get(),
+                    dependencyDistances
+                );
+                if (expected.expectedDependencyDistanceSum.isPresent()) Assertions.assertEquals(
+                    expected.expectedDependencyDistanceSum.get(),
+                    sentenceDataPoint.dependencyDistanceSum
+                );
+                if (expected.expectedSentenceLength.isPresent()) Assertions.assertEquals(
+                    expected.expectedSentenceLength.get(),
+                    sentenceDataPoint.sentenceLength
+                );
+                if (expected.expectedNumberOfSyntacticLinks.isPresent()) Assertions.assertEquals(
+                    expected.expectedNumberOfSyntacticLinks.get(),
+                    sentenceDataPoint.numberOfSyntacticLinks
+                );
+                if (expected.expectedRootDistance.isPresent()) Assertions.assertEquals(
+                    expected.expectedRootDistance.get(),
+                    sentenceDataPoint.rootDistance
+                );
+                if (expected.expectedDependencyHeight.isPresent()) Assertions.assertEquals(
+                    expected.expectedDependencyHeight.get(),
+                    sentenceDataPoint.dependencyHeight
+                );
 
-                Assertions.assertEquals(expected.expectedMDD, sentenceDataPoint.mdd, 0.00001);
-                Assertions.assertEquals(expected.expectedNDD, sentenceDataPoint.ndd, 0.00001);
+                if (expected.expectedMDD.isPresent()) Assertions.assertEquals(expected.expectedMDD.get(), sentenceDataPoint.mdd, 0.00001);
+                if (expected.expectedNDD.isPresent()) Assertions.assertEquals(expected.expectedNDD.get(), sentenceDataPoint.ndd, 0.00001);
 
-                Assertions.assertEquals(expected.expectedTreeHeight, sentenceDataPoint.treeHeight);
-                Assertions.assertEquals(expected.expectedDepthMean, sentenceDataPoint.depthMean, 0.01);
-                Assertions.assertEquals(expected.expectedDepthVariance, sentenceDataPoint.depthVariance, 0.01);
+                if (expected.expectedTreeHeight.isPresent()) Assertions.assertEquals(
+                    expected.expectedTreeHeight.get(),
+                    sentenceDataPoint.treeHeight
+                );
+                if (expected.expectedDepthMean.isPresent()) Assertions.assertEquals(
+                    expected.expectedDepthMean.get(),
+                    sentenceDataPoint.depthMean,
+                    0.01
+                );
+                if (expected.expectedDepthVariance.isPresent()) Assertions.assertEquals(
+                    expected.expectedDepthVariance.get(),
+                    sentenceDataPoint.depthVariance,
+                    0.01
+                );
 
-                Assertions.assertEquals(expected.expectedLeaves, sentenceDataPoint.leaves);
+                if (expected.expectedLeaves.isPresent()) Assertions.assertEquals(expected.expectedLeaves.get(), sentenceDataPoint.leaves);
 
-                Assertions.assertEquals(expected.expectedTreeDegree, sentenceDataPoint.treeDegree);
-                Assertions.assertEquals(expected.expectedTreeDegreeMean, sentenceDataPoint.treeDegreeMean, 0.01);
-                Assertions.assertEquals(expected.expectedTreeDegreeVariance, sentenceDataPoint.treeDegreeVariance, 0.01);
+                if (expected.expectedTreeDegree.isPresent()) Assertions.assertEquals(
+                    expected.expectedTreeDegree.get(),
+                    sentenceDataPoint.treeDegree
+                );
+                if (expected.expectedTreeDegreeMean.isPresent()) Assertions.assertEquals(
+                    expected.expectedTreeDegreeMean.get(),
+                    sentenceDataPoint.treeDegreeMean,
+                    0.01
+                );
+                if (expected.expectedTreeDegreeVariance.isPresent()) Assertions.assertEquals(
+                    expected.expectedTreeDegreeVariance.get(),
+                    sentenceDataPoint.treeDegreeVariance,
+                    0.01
+                );
 
-                Assertions.assertEquals(expected.headFinalRatio, sentenceDataPoint.headFinalRatio, 0.01);
-                Assertions.assertEquals(expected.headFinalDistance, sentenceDataPoint.headFinalDistance);
+                if (expected.headFinalRatio.isPresent()) Assertions.assertEquals(
+                    expected.headFinalRatio.get(),
+                    sentenceDataPoint.headFinalRatio,
+                    0.01
+                );
+                if (expected.headFinalDistance.isPresent()) Assertions.assertEquals(
+                    expected.headFinalDistance.get(),
+                    sentenceDataPoint.headFinalDistance
+                );
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
             }
