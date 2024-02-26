@@ -70,10 +70,12 @@ public class Run {
             );
         }
 
-        String outputPath = fileList.remove(fileList.size() - 1);
+        final boolean fOverwrite = pOverwrite;
         final boolean fFailOnError = pFailOnError;
+        final CompressionMethod fCompression = pCompression;
+        final String outputPath = fileList.remove(fileList.size() - 1);
 
-        ArrayList<String> inputFiles = fileList
+        fileList
             .stream()
             .flatMap((String path) -> {
                 File file = Paths.get(path).toFile();
@@ -89,18 +91,15 @@ public class Run {
                     }
                     return visitor.stream();
                 }
-                return Stream.of(path);
+                return Stream.of(file.getAbsolutePath());
             })
-            .collect(Collectors.toCollection(ArrayList::new));
-
-            for (String fileName : inputFiles) {
-                process(fileName, outputPath, pOverwrite, fFailOnError, pCompression);
-            }
+            .parallel()
+            .forEach(fileName -> process(fileName, outputPath, fOverwrite, fFailOnError, fCompression));
     }
 
     private static void process(
         String fileName,
-        String outputPath,
+        final String outputPath,
         final boolean pOverwrite,
         final boolean pFailOnError,
         final CompressionMethod pCompression
@@ -155,7 +154,7 @@ public class Run {
             ) {
                 writer.write(new Gson().toJson(documentDataPoint));
 
-                System.out.printf("Wrote data %d points to '%s'%n", documentDataPoint.getSentences().size(), inputPath.toString());
+                System.out.printf("Wrote data points %d to '%s'%n", documentDataPoint.getSentences().size(), inputPath.toString());
             }
         } catch (Exception e) {
             if (pFailOnError) {
