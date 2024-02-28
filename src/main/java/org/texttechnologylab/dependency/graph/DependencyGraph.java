@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.text.similarity.LevenshteinDistance;
 
+import com.google.common.collect.Range;
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.ImmutableGraph;
 import com.google.common.graph.Traverser;
@@ -19,7 +20,8 @@ public class DependencyGraph {
     public final ImmutableGraph<Integer> dependencyGraph;
     public final ImmutableGraph<Integer> dependencyGraphWithPunct;
 
-    public DependencyGraph(ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct) throws InvalidDependencyGraphException {
+    public DependencyGraph(ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct)
+        throws InvalidDependencyGraphException {
         if (dependencyGraph.outDegree(0) < 0) {
             throw new InvalidDependencyGraphException("Dependency graph is empty!");
         }
@@ -75,15 +77,31 @@ public class DependencyGraph {
     }
 
     public int crossings() {
-        return this.dependencyGraph.edges().stream().map(edge -> this.getNumberOfCrossings(edge)).reduce(0, (a, b) -> a + b);
+        return (
+            this.dependencyGraph.edges()
+                .stream()
+                .filter(edge -> edge.source() > 0)
+                .map(edge -> this.getNumberOfCrossings(edge))
+                .reduce(0, (a, b) -> a + b) /
+            2
+        );
     }
 
-    private int getNumberOfCrossings(EndpointPair<Integer> u) {
+    private Integer getNumberOfCrossings(EndpointPair<Integer> u) {
+        Range<Integer> uRange = Range.open(Math.min(u.source(), u.target()), Math.max(u.source(), u.target()));
         return (int) this.dependencyGraph.edges()
             .stream()
-            .map(v -> (u.source() < v.source() && u.target() < v.target()) || (u.source() > v.source() && u.target() > v.target()))
-            .map(b -> b ? 1 : 0)
-            .reduce(0, (a, b) -> a + b);
+            .filter(edge -> edge.source() > 0)
+            .filter(v ->
+                u != v &&
+                u.source() != v.source() &&
+                u.target() != v.target() &&
+                u.source() != v.target() &&
+                u.target() != v.source() &&
+                ((uRange.contains(v.source()) && !uRange.contains(v.target())) ||
+                    (!uRange.contains(v.source()) && uRange.contains(v.target())))
+            )
+            .count();
     }
 
     public int dependencyHeight() {
