@@ -1,15 +1,5 @@
 package org.texttechnologylab.dependency;
 
-import com.google.common.collect.Streams;
-import com.google.common.graph.GraphBuilder;
-import com.google.common.graph.ImmutableGraph;
-import com.google.common.graph.ImmutableGraph.Builder;
-import com.google.gson.Gson;
-import com.google.gson.TypeAdapter;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -27,17 +17,29 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.dkpro.core.api.resources.CompressionUtils;
 import org.texttechnologylab.dependency.data.DocumentDataPoint;
 import org.texttechnologylab.dependency.data.SentenceDataPoint;
 import org.texttechnologylab.dependency.graph.InvalidDependencyGraphException;
+
+import com.google.common.collect.Streams;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.ImmutableGraph.Builder;
+import com.google.gson.Gson;
+import com.google.gson.TypeAdapter;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+
+import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 
 public class Run {
 
@@ -117,28 +119,34 @@ public class Run {
             String documentUri = "DeuParl/" + parser + "/" + documentId;
 
             GraphIterator graphIterator = new GraphIterator(Files.newBufferedReader(inputPath));
-            ArrayList<SentenceDataPoint> sentenceDataPoints = Streams
+            ArrayList<NamedSentenceDataPoint> sentenceDataPoints = Streams
                 .stream(graphIterator)
                 .parallel()
-                .map(graph -> {
+                .map(textIdAndgraph -> {
                     try {
-                        return Optional.<SentenceDataPoint>of(getSentenceDataPoint(graph));
+                        String textId = textIdAndgraph.getLeft();
+                        ArrayList<Integer[][]> graph = textIdAndgraph.getRight();
+                        return Optional.<NamedSentenceDataPoint>of(getSentenceDataPoint(textId, graph));
                     } catch (InvalidDependencyGraphException e) {
                         if (pFailOnError) {
                             throw new RuntimeException(e);
                         }
                     }
-                    return Optional.<SentenceDataPoint>empty();
+                    return Optional.<NamedSentenceDataPoint>empty();
                 })
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toCollection(ArrayList::new));
 
-            DocumentDataPoint documentDataPoint = new DocumentDataPoint(
-                new TreeMap<>(Map.of("file", fileName, "dateYear", dateYear)),
-                new TreeMap<>(Map.of("documentId", documentId, "documentUri", documentUri)),
-                sentenceDataPoints
-            );
+            DocumentDataPoint documentDataPoint = new DocumentDataPoint();
+            documentDataPoint.getDocumentAnnotation().put("file", fileName);
+            documentDataPoint.getDocumentAnnotation().put("parser", parser);
+            documentDataPoint.getDocumentAnnotation().put("dateYear", dateYear);
+
+            documentDataPoint.getDocumentMetaData().put("documentId", documentId);
+            documentDataPoint.getDocumentMetaData().put("documentUri", documentUri);
+
+            documentDataPoint.getSentences().addAll(sentenceDataPoints);
 
             System.out.printf(
                 "Processed %d/%d graphs from '%s'%n",
@@ -192,28 +200,30 @@ public class Run {
      *
      * The graphs are expected to be in the following format:
      *
-     * <pre>
+     * <pre>{@code
      *[
-     *  [
+     *  "1234": [                   // ID, usually from metadata "text_id"
      *    [[0, 1], [0, 2], [2, 3]], // dependency graph
      *    [[3, 4]]                  // punctuation edges
      *  ]
      *]
-     * </pre>
+     * }</pre>
      */
-    private static class GraphIterator implements Iterator<ArrayList<Integer[][]>> {
+    private static class GraphIterator implements Iterator<ImmutablePair<String, ArrayList<Integer[][]>>> {
 
         private final Gson gson = new Gson();
         private final JsonReader reader;
+        private final TypeAdapter<String> key;
         private final TypeAdapter<ArrayList<Integer[][]>> adapter;
         private final AtomicInteger counter = new AtomicInteger(0);
 
         public GraphIterator(Reader reader) throws IOException {
+            this.key = gson.getAdapter(new TypeToken<String>() {});
             this.adapter = gson.getAdapter(new TypeToken<ArrayList<Integer[][]>>() {});
             this.reader = gson.newJsonReader(reader);
 
-            // Skip the top-level array
-            this.reader.beginArray();
+            // Start the top-level object
+            this.reader.beginObject();
         }
 
         @Override
@@ -221,11 +231,17 @@ public class Run {
             try {
                 JsonToken peeked = this.reader.peek();
                 switch (peeked) {
-                    case BEGIN_ARRAY:
+                    case NAME:
                         return true;
+                    // case BEGIN_ARRAY:
+                    // return true;
                     case END_ARRAY:
                         this.reader.endArray();
                         return this.hasNext();
+                    case END_OBJECT:
+                        this.reader.endObject();
+                        // There is only one object in the JSON
+                        return false;
                     case END_DOCUMENT:
                         return false;
                     default:
@@ -237,13 +253,15 @@ public class Run {
         }
 
         @Override
-        public ArrayList<Integer[][]> next() {
+        public ImmutablePair<String, ArrayList<Integer[][]>> next() {
             try {
                 if (!this.hasNext()) {
                     throw new NoSuchElementException("No more elements");
                 }
                 this.counter.incrementAndGet();
-                return this.adapter.read(reader);
+                String textId = this.key.read(this.reader);
+                ArrayList<Integer[][]> edgeArrays = this.adapter.read(reader);
+                return ImmutablePair.of(textId, edgeArrays);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -254,7 +272,22 @@ public class Run {
         }
     }
 
-    private static SentenceDataPoint getSentenceDataPoint(ArrayList<Integer[][]> graph) throws InvalidDependencyGraphException {
+    private static class NamedSentenceDataPoint extends SentenceDataPoint {
+
+        public final String textId;
+
+        public NamedSentenceDataPoint(
+            String textId,
+            ImmutableGraph<Integer> dependencyGraph,
+            ImmutableGraph<Integer> dependencyGraphWithPunct
+        ) throws InvalidDependencyGraphException {
+            super(dependencyGraph, dependencyGraphWithPunct);
+            this.textId = textId;
+        }
+    }
+
+    private static NamedSentenceDataPoint getSentenceDataPoint(String textId, ArrayList<Integer[][]> graph)
+        throws InvalidDependencyGraphException {
         Builder<Integer> graphBuilder = GraphBuilder.directed().<Integer>immutable().addNode(0);
 
         for (Integer[] edge : graph.get(0)) {
@@ -267,6 +300,6 @@ public class Run {
         }
         ImmutableGraph<Integer> dependencyGraphWithPunct = graphBuilder.build();
 
-        return new SentenceDataPoint(dependencyGraph, dependencyGraphWithPunct);
+        return new NamedSentenceDataPoint(textId, dependencyGraph, dependencyGraphWithPunct);
     }
 }
