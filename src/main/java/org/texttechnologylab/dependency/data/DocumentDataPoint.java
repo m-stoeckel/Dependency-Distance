@@ -1,6 +1,5 @@
 package org.texttechnologylab.dependency.data;
 
-import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -38,7 +37,11 @@ public class DocumentDataPoint {
         this.sentences = new ArrayList<>();
     }
 
-    public DocumentDataPoint(TreeMap<String, String> documentAnnotation, TreeMap<String, String> documentMetaData, ArrayList<SentenceDataPoint> sentences) {
+    public DocumentDataPoint(
+        TreeMap<String, String> documentAnnotation,
+        TreeMap<String, String> documentMetaData,
+        ArrayList<SentenceDataPoint> sentences
+    ) {
         this.documentAnnotation = documentAnnotation;
         this.documentMetaData = documentMetaData;
         this.sentences = sentences;

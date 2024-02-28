@@ -361,6 +361,7 @@ public class DependencyValuesTest {
 
                 if (expected.dependencyDistances.isPresent()) {
                     Assertions.assertEquals(expected.dependencyDistances.get(), dependencyDistances, "dependencyDistances");
+                    System.out.println("OK: dependencyDistances");
                 }
                 if (expected.dependencyDistanceSum.isPresent()) {
                     Assertions.assertEquals(
@@ -368,9 +369,11 @@ public class DependencyValuesTest {
                         sentenceDataPoint.dependencyDistanceSum,
                         "dependencyDistanceSum"
                     );
+                    System.out.println("OK: dependencyDistanceSum");
                 }
                 if (expected.sentenceLength.isPresent()) {
                     Assertions.assertEquals(expected.sentenceLength.get(), sentenceDataPoint.sentenceLength, "sentenceLength");
+                    System.out.println("OK: sentenceLength");
                 }
                 if (expected.numberOfSyntacticLinks.isPresent()) {
                     Assertions.assertEquals(
@@ -378,40 +381,51 @@ public class DependencyValuesTest {
                         sentenceDataPoint.numberOfSyntacticLinks,
                         "numberOfSyntacticLinks"
                     );
+                    System.out.println("OK: numberOfSyntacticLinks");
                 }
                 if (expected.rootDistance.isPresent()) {
                     Assertions.assertEquals(expected.rootDistance.get(), sentenceDataPoint.rootDistance, "rootDistance");
+                    System.out.println("OK: rootDistance");
                 }
                 if (expected.dependencyHeight.isPresent()) {
                     Assertions.assertEquals(expected.dependencyHeight.get(), sentenceDataPoint.dependencyHeight, "dependencyHeight");
+                    System.out.println("OK: dependencyHeight");
                 }
 
                 if (expected.mDD.isPresent()) {
                     Assertions.assertEquals(expected.mDD.get(), sentenceDataPoint.mdd, 0.00001, "mDD");
+                    System.out.println("OK: mDD");
                 }
                 if (expected.nDD.isPresent()) {
                     Assertions.assertEquals(expected.nDD.get(), sentenceDataPoint.ndd, 0.00001, "nDD");
+                    System.out.println("OK: nDD");
                 }
 
                 if (expected.treeHeight.isPresent()) {
                     Assertions.assertEquals(expected.treeHeight.get(), sentenceDataPoint.treeHeight, "treeHeight");
+                    System.out.println("OK: treeHeight");
                 }
                 if (expected.depthMean.isPresent()) {
                     Assertions.assertEquals(expected.depthMean.get(), sentenceDataPoint.depthMean, 0.01, "depthMean");
+                    System.out.println("OK: depthMean");
                 }
                 if (expected.depthVariance.isPresent()) {
                     Assertions.assertEquals(expected.depthVariance.get(), sentenceDataPoint.depthVariance, 0.01, "depthVariance");
+                    System.out.println("OK: depthVariance");
                 }
 
                 if (expected.leaves.isPresent()) {
                     Assertions.assertEquals(expected.leaves.get(), sentenceDataPoint.leaves, "leaves");
+                    System.out.println("OK: leaves");
                 }
 
                 if (expected.treeDegree.isPresent()) {
                     Assertions.assertEquals(expected.treeDegree.get(), sentenceDataPoint.treeDegree, "treeDegree");
+                    System.out.println("OK: treeDegree");
                 }
                 if (expected.treeDegreeMean.isPresent()) {
                     Assertions.assertEquals(expected.treeDegreeMean.get(), sentenceDataPoint.treeDegreeMean, 0.01, "treeDegreeMean");
+                    System.out.println("OK: treeDegreeMean");
                 }
                 if (expected.treeDegreeVariance.isPresent()) {
                     Assertions.assertEquals(
@@ -420,13 +434,20 @@ public class DependencyValuesTest {
                         0.01,
                         "treeDegreeVariance"
                     );
+                    System.out.println("OK: treeDegreeVariance");
                 }
 
                 if (expected.headFinalRatio.isPresent()) {
                     Assertions.assertEquals(expected.headFinalRatio.get(), sentenceDataPoint.headFinalRatio, 0.01, "headFinalRatio");
+                    System.out.println("OK: headFinalRatio");
                 }
                 if (expected.headFinalDistance.isPresent()) {
                     Assertions.assertEquals(expected.headFinalDistance.get(), sentenceDataPoint.headFinalDistance, "headFinalDistance");
+                    System.out.println("OK: headFinalDistance");
+                }
+                if (expected.crossings.isPresent()) {
+                    Assertions.assertEquals(expected.crossings.get(), sentenceDataPoint.crossings, "crossings");
+                    System.out.println("OK: crossings");
                 }
             } catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException | SecurityException e) {
                 throw new RuntimeException(e);
