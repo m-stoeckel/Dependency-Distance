@@ -12,24 +12,25 @@ public class SentenceDataPoint {
 
     public final ArrayList<Integer[]> dependencyEdges;
     public final ArrayList<Integer[]> dependencyEdgesWithPunct;
+
     public final ArrayList<Integer> dependencyDistances;
-    public final int dependencyDistanceSum;
-    public final int sentenceLength;
-    public final int numberOfSyntacticLinks;
-    public final int rootDistance;
-    public final int dependencyHeight;
-    public final double mdd;
-    public final double ndd;
-    public final int treeHeight;
     public final double depthMean;
     public final double depthVariance;
-    public final int leaves;
-    public final int treeDegree;
+    public final double headFinalRatio;
+    public final double mdd;
+    public final double ndd;
     public final double treeDegreeMean;
     public final double treeDegreeVariance;
-    public final double headFinalRatio;
-    public final int headFinalDistance;
     public final int crossings;
+    public final int dependencyDistanceSum;
+    public final int dependencyHeight;
+    public final int headFinalDistance;
+    public final int leaves;
+    public final int numberOfSyntacticLinks;
+    public final int rootDistance;
+    public final int sentenceLength;
+    public final int treeDegree;
+    public final int treeHeight;
 
     public SentenceDataPoint(ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct)
         throws InvalidDependencyGraphException {
