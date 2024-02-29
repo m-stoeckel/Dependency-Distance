@@ -11,11 +11,11 @@ import java.util.Map;
 import org.apache.uima.analysis_component.AnalysisComponent;
 import org.apache.uima.analysis_engine.AnalysisEngine;
 import org.apache.uima.analysis_engine.impl.PrimitiveAnalysisEngine_impl;
+import org.apache.uima.cas.impl.XmiCasDeserializer;
 import org.apache.uima.fit.factory.JCasFactory;
-import org.apache.uima.fit.factory.TypeSystemDescriptionFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.resource.metadata.TypeSystemDescription;
+import org.dkpro.core.api.resources.CompressionMethod;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.texttechnologylab.dependency.data.DocumentDataPoint;
@@ -23,7 +23,6 @@ import org.texttechnologylab.dependency.data.SentenceDataPoint;
 import org.texttechnologylab.utils.ExpectedDocumentAnnotations;
 import org.texttechnologylab.utils.ExpectedValues;
 
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
@@ -33,24 +32,23 @@ public class DependencyMetricsValueTest {
 
     @Test
     public void testJumped() {
-        URL resource = DependencyMetricsValueTest.class.getClassLoader().getResource("xmi/test-jumped.xmi");
-        testWithValue(resource.getPath(), ExpectedValues.getExpectedForJumped(), ExpectedDocumentAnnotations.get20211223());
+        testWithValue("xmi/test-jumped.xmi", ExpectedValues.getExpectedForJumped(), ExpectedDocumentAnnotations.get20211223());
     }
 
     @Test
     public void testGeklappt() {
-        URL resource = DependencyMetricsValueTest.class.getClassLoader().getResource("xmi/test-geklappt.xmi");
-        testWithValue(resource.getPath(), ExpectedValues.getExpectedForGeklappt(), ExpectedDocumentAnnotations.get20211223());
+        testWithValue("xmi/test-geklappt.xmi", ExpectedValues.getExpectedForGeklappt(), ExpectedDocumentAnnotations.get20211223());
     }
 
     public void testWithValue(String path, ExpectedValues expectedValues, ExpectedDocumentAnnotations expectedAnnotations) {
         try {
             String pOutput = System.getProperty("output", "target/output/");
 
-            TypeSystemDescription typeSystemDescription = TypeSystemDescriptionFactory.createTypeSystemDescriptionFromPath(
-                DependencyMetricsValueTest.class.getClassLoader().getResource("TypeSystem.xml").getPath()
+            JCas jCas = JCasFactory.createJCas();
+            XmiCasDeserializer.deserialize(
+                DependencyMetricsValueTest.class.getClassLoader().getResourceAsStream(path),
+                jCas.getCas()
             );
-            JCas jCas = JCasFactory.createJCas(path, typeSystemDescription);
 
             AnalysisEngine engine = createEngine(
                 ReflectionEngine.class,

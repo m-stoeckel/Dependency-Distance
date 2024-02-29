@@ -4,11 +4,12 @@ import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDesc
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+
+import org.dkpro.core.api.resources.CompressionMethod;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;

@@ -5,7 +5,6 @@ import com.google.common.graph.GraphBuilder;
 import com.google.common.graph.ImmutableGraph;
 import com.google.common.graph.ImmutableGraph.Builder;
 import com.google.gson.Gson;
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +24,8 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.dkpro.core.api.resources.CompressionMethod;
 import org.dkpro.core.api.resources.CompressionUtils;
 import org.texttechnologylab.dependency.data.DocumentDataPoint;
 import org.texttechnologylab.dependency.data.SentenceDataPoint;

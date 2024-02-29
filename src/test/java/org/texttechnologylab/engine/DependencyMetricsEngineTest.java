@@ -4,6 +4,7 @@ import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDesc
 
 import java.nio.file.Path;
 
+import org.dkpro.core.api.resources.CompressionMethod;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -15,7 +16,6 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
 import org.texttechnologylab.dependency.engine.DependencyMetricsEngine;
 
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 
 public class DependencyMetricsEngineTest {
 

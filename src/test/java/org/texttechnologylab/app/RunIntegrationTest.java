@@ -11,13 +11,13 @@ import org.junit.jupiter.api.io.TempDir;
 import org.texttechnologylab.dependency.app.Run;
 import org.texttechnologylab.dependency.data.DocumentDataPoint;
 import org.texttechnologylab.json.GraphIteratorTest;
-import org.texttechnologylab.utils.ExpectedDocumentAnnotations;
 import org.texttechnologylab.utils.ExpectedValues;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
 public class RunIntegrationTest {
+
 
     @Test
     @Tag("integration")

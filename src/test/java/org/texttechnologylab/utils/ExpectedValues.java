@@ -97,30 +97,11 @@ public class ExpectedValues {
         private ExpectedValues expectedValues;
 
         public Builder() {
-            expectedValues =
-                new ExpectedValues(
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty()
-                );
+            this.expectedValues = new ExpectedValues();
         }
 
         public ExpectedValues build() {
-            return expectedValues;
+            return this.expectedValues;
         }
 
         public ExpectedValues.Builder expectedDependencyDistances(List<Integer> value) {
@@ -297,7 +278,7 @@ public class ExpectedValues {
     }
 
     public static ExpectedValues getExpectedForJumped() {
-        ExpectedValues expected = ExpectedValues
+        return ExpectedValues
             .builder()
             .expectedDependencyDistances(List.of(3, 2, 1, 1, 3, 2, 1, 4))
             .expectedNumberOfSyntacticLinks(8)
@@ -308,11 +289,10 @@ public class ExpectedValues {
             .expectedCrossings(0)
             .expectedTreeHeight(3)
             .build();
-        return expected;
     }
 
     public static ExpectedValues getExpectedForGeklappt() {
-        ExpectedValues expected = ExpectedValues
+        return ExpectedValues
             .builder()
             .expectedDependencyDistances(List.of(5, 4, 2, 1, 1))
             .expectedNumberOfSyntacticLinks(5)
@@ -332,6 +312,5 @@ public class ExpectedValues {
             .expectedHeadFinalRatio(0.67)
             .expectedHeadFinalDistance(4)
             .build();
-        return expected;
     }
 }
