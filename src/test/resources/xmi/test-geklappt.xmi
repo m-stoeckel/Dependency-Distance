@@ -80,7 +80,7 @@
         language="de"
         documentTitle="Test Document from 13.12.2021"
         documentId="test.xmi"
-        documentUri="file:/src/test/resources/test.xmi"
+        documentUri="file:/src/test/resources/test-geklappt.xmi"
         documentBaseUri="file:/src/test/resources/"
         isLastSegment="false" />
     <annotation2:DocumentAnnotation

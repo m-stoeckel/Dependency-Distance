@@ -1,5 +1,11 @@
-package org.texttechnologylab.dependency;
+package org.texttechnologylab.dependency.app;
 
+import com.google.common.collect.Streams;
+import com.google.common.graph.GraphBuilder;
+import com.google.common.graph.ImmutableGraph;
+import com.google.common.graph.ImmutableGraph.Builder;
+import com.google.gson.Gson;
+import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -19,21 +25,12 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import org.dkpro.core.api.resources.CompressionUtils;
 import org.texttechnologylab.dependency.data.DocumentDataPoint;
 import org.texttechnologylab.dependency.data.SentenceDataPoint;
 import org.texttechnologylab.dependency.graph.InvalidDependencyGraphException;
 import org.texttechnologylab.dependency.json.GraphIterator;
 import org.texttechnologylab.dependency.json.GraphIteratorItem;
-
-import com.google.common.collect.Streams;
-import com.google.common.graph.GraphBuilder;
-import com.google.common.graph.ImmutableGraph;
-import com.google.common.graph.ImmutableGraph.Builder;
-import com.google.gson.Gson;
-
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
 
 public class Run {
 
@@ -44,6 +41,7 @@ public class Run {
 
         ArrayList<String> fileList = new ArrayList<String>();
         Iterator<String> iterator = Arrays.stream(args).iterator();
+        Optional<String> pCorpusName = Optional.empty();
         while (iterator.hasNext()) {
             String argOrFlag = iterator.next();
             switch (argOrFlag) {
@@ -56,6 +54,9 @@ public class Run {
                 case "--failOnError":
                     pFailOnError = Boolean.parseBoolean(iterator.next());
                     break;
+                case "--corpus":
+                    pCorpusName = Optional.of(iterator.next());
+                    break;
                 default:
                     fileList.add(argOrFlag);
             }
@@ -65,11 +66,12 @@ public class Run {
                 String.format("Expected at least 2 files (input, output), but got %d: %s", fileList.size(), fileList)
             );
         }
+        final String outputPath = fileList.remove(fileList.size() - 1);
 
         final boolean fOverwrite = pOverwrite;
         final boolean fFailOnError = pFailOnError;
         final CompressionMethod fCompression = pCompression;
-        final String outputPath = fileList.remove(fileList.size() - 1);
+        final Optional<String> fCorpusName = pCorpusName;
 
         fileList
             .stream()
@@ -90,7 +92,7 @@ public class Run {
                 return Stream.of(file.getAbsolutePath());
             })
             .parallel()
-            .forEach(fileName -> process(fileName, outputPath, fOverwrite, fFailOnError, fCompression));
+            .forEach(fileName -> process(fileName, outputPath, fOverwrite, fFailOnError, fCompression, fCorpusName));
     }
 
     private static void process(
@@ -98,7 +100,8 @@ public class Run {
         final String outputPath,
         final boolean pOverwrite,
         final boolean pFailOnError,
-        final CompressionMethod pCompression
+        final CompressionMethod pCompression,
+        final Optional<String> pCorpusName
     ) {
         try {
             Path inputPath = Paths.get(fileName);
@@ -109,8 +112,8 @@ public class Run {
 
             String parser = inputPath.toFile().getParentFile().getName();
             String dateYear = inputPath.toFile().getName().split("\\.")[0];
-            String documentId = "Bundestag/" + dateYear;
-            String documentUri = "DeuParl/" + parser + "/" + documentId;
+            String documentId = pCorpusName.isPresent() ? pCorpusName.get() + "/" + parser + "/" + dateYear : parser + "/" + dateYear;
+            String documentUri = "file://" + inputPath.toAbsolutePath().toString();
 
             GraphIterator graphIterator = new GraphIterator(Files.newBufferedReader(inputPath));
             ArrayList<NamedSentenceDataPoint> sentenceDataPoints = Streams
@@ -154,7 +157,7 @@ public class Run {
             ) {
                 writer.write(new Gson().toJson(documentDataPoint));
 
-                System.out.printf("Wrote data points %d to '%s'%n", documentDataPoint.getSentences().size(), inputPath.toString());
+                System.out.printf("Wrote %d data points to '%s'%n", documentDataPoint.getSentences().size(), outputFile.toString());
             }
         } catch (Exception e) {
             if (pFailOnError) {

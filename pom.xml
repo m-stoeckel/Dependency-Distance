@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.texttechnologylab</groupId>
@@ -44,11 +45,28 @@
                         -Dorg.apache.uima.logger.class=org.texttechnologylab.utilities.uima.util.Log4j2Logger_impl
                     </argLine>
                     <forkedProcessTimeoutInSeconds>0</forkedProcessTimeoutInSeconds>
+                    <excludedGroups>integration, runnable</excludedGroups>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
+                <version>3.2.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                  <test>Runner#testGerParCorFile, RunIntegrationTest</test>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-mave-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
                     <argLine>
@@ -66,7 +84,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.texttechnologylab.dependency.Run</mainClass>
+                            <mainClass>org.texttechnologylab.dependency.app.Run</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -83,57 +101,6 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--            <plugin>-->
-            <!--                &lt;!&ndash;generate types dynamically &ndash;&gt;-->
-            <!--                <groupId>org.apache.uima</groupId>-->
-            <!--                <artifactId>jcasgen-maven-plugin</artifactId>-->
-            <!--                <version>2.9.0</version>-->
-            <!--                <configuration>-->
-            <!--                    <limitToProject>true</limitToProject>-->
-            <!--                    <typeSystemIncludes>-->
-            <!--                        <include>src/main/resources/org/texttechnologylab/types/TypeSystem.xml</include>-->
-            <!--                        &lt;!&ndash;                        <include>src/main/resources/org/texttechnologylab/types/reproducibleAnnotations.xml</include>&ndash;&gt;-->
-            <!--                    </typeSystemIncludes>-->
-            <!--                </configuration>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        &lt;!&ndash;call it in the generate-source phase &ndash;&gt;-->
-            <!--                        <phase>generate-sources</phase>-->
-            <!--                        <goals>-->
-            <!--                            <goal>generate</goal>-->
-            <!--                        </goals>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
-            <!--            <plugin>-->
-            <!--                <groupId>org.codehaus.mojo</groupId>-->
-            <!--                <artifactId>build-helper-maven-plugin</artifactId>-->
-            <!--                <version>1.10</version>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        <id>addToSourceFolder</id>-->
-            <!--                        <goals>-->
-            <!--                            &lt;!&ndash;add the generated sources &ndash;&gt;-->
-            <!--                            <goal>add-source</goal>-->
-            <!--                        </goals>-->
-            <!--                        <phase>process-sources</phase>-->
-            <!--                        <configuration>-->
-            <!--                            <sources>-->
-            <!--                                &lt;!&ndash;default path to generated sources &ndash;&gt;-->
-            <!--                                <source>${project.build.directory}/generated-sources/jcasgen</source>-->
-            <!--                            </sources>-->
-            <!--                        </configuration>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
-            <!--            <plugin>-->
-            <!--                <groupId>org.apache.maven.plugins</groupId>-->
-            <!--                <artifactId>maven-resources-plugin</artifactId>-->
-            <!--                <version>3.3.1</version>-->
-            <!--                <configuration>-->
-            <!--                    <encoding>${project.build.sourceEncoding}</encoding>-->
-            <!--                </configuration>-->
-            <!--            </plugin>-->
         </plugins>
     </build>
     <dependencies>
@@ -177,7 +144,7 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>33.0.0-jre</version>
-          </dependency>
+        </dependency>
 
         <dependency>
             <groupId>de.tudarmstadt.ukp.dkpro.core</groupId>

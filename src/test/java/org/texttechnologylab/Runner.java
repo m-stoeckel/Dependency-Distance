@@ -2,11 +2,17 @@ package org.texttechnologylab;
 
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.connection.mongodb.MongoDBConfig;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIPipelineComponent;
@@ -15,17 +21,19 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.io.DUUIAsynchronousProce
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.DUUICollectionReader;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.io.reader.DUUIFileReader;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
-import org.texttechnologylab.dependency.engine.DependencyDistanceEngine;
+import org.texttechnologylab.dependency.data.DocumentDataPoint;
+import org.texttechnologylab.dependency.engine.DependencyMetricsEngine;
 import org.texttechnologylab.parliament.duui.DUUIGerParCorReader;
-
-import de.tudarmstadt.ukp.dkpro.core.api.resources.CompressionMethod;
+import org.texttechnologylab.utils.ExpectedDocumentAnnotations;
+import org.texttechnologylab.utils.ExpectedValues;
 
 public class Runner {
 
     @Test
+    @Tag("runnable")
     public void GerParCor() {
         try {
-            String pConfig = System.getProperty("config", "src/test/resources/mongodb.ini");
+            String pConfig = System.getProperty("config", this.getClass().getClassLoader().getResource("mongodb.ini").getPath());
             String pFilter = System.getProperty("filter", "{}");
             int pScale = Integer.parseInt(System.getProperty("scale", "8"));
             int pPoolsize = Integer.parseInt(System.getProperty("poolsize", "16"));
@@ -86,16 +94,16 @@ public class Runner {
 
             DUUIPipelineComponent dependency = new DUUIUIMADriver.Component(
                 createEngineDescription(
-                    DependencyDistanceEngine.class,
-                    DependencyDistanceEngine.PARAM_TARGET_LOCATION,
+                    DependencyMetricsEngine.class,
+                    DependencyMetricsEngine.PARAM_TARGET_LOCATION,
                     pOutput,
-                    DependencyDistanceEngine.PARAM_OVERWRITE,
+                    DependencyMetricsEngine.PARAM_OVERWRITE,
                     pOverwrite,
-                    DependencyDistanceEngine.PARAM_COMPRESSION,
+                    DependencyMetricsEngine.PARAM_COMPRESSION,
                     pCompression,
-                    DependencyDistanceEngine.PARAM_FAIL_ON_ERROR,
+                    DependencyMetricsEngine.PARAM_FAIL_ON_ERROR,
                     pFailOnError,
-                    DependencyDistanceEngine.PARAM_FIX_DATE_YEAR,
+                    DependencyMetricsEngine.PARAM_FIX_DATE_YEAR,
                     pFixDateYear
                 )
             )
@@ -105,15 +113,13 @@ public class Runner {
 
             composer.run(processor, "mDD");
             composer.shutdown();
-
-            Assertions.assertTrue(true);
         } catch (Exception e) {
-            e.printStackTrace();
-            Assertions.fail();
+            throw new RuntimeException(e);
         }
     }
 
     @Test
+    @Tag("runnable")
     public void GerParCorFile() {
         try {
             String pInput = System.getProperty("input");
@@ -177,16 +183,16 @@ public class Runner {
 
             DUUIPipelineComponent dependency = new DUUIUIMADriver.Component(
                 createEngineDescription(
-                    DependencyDistanceEngine.class,
-                    DependencyDistanceEngine.PARAM_TARGET_LOCATION,
+                    DependencyMetricsEngine.class,
+                    DependencyMetricsEngine.PARAM_TARGET_LOCATION,
                     pOutput,
-                    DependencyDistanceEngine.PARAM_OVERWRITE,
+                    DependencyMetricsEngine.PARAM_OVERWRITE,
                     pOverwrite,
-                    DependencyDistanceEngine.PARAM_COMPRESSION,
+                    DependencyMetricsEngine.PARAM_COMPRESSION,
                     pCompression,
-                    DependencyDistanceEngine.PARAM_FAIL_ON_ERROR,
+                    DependencyMetricsEngine.PARAM_FAIL_ON_ERROR,
                     pFailOnError,
-                    DependencyDistanceEngine.PARAM_FIX_DATE_YEAR,
+                    DependencyMetricsEngine.PARAM_FIX_DATE_YEAR,
                     pFixDateYear
                 )
             )
@@ -196,11 +202,31 @@ public class Runner {
 
             composer.run(processor, "mDD");
             composer.shutdown();
-
-            Assertions.assertTrue(true);
         } catch (Exception e) {
-            e.printStackTrace();
-            Assertions.fail();
+            throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    @Tag("integration")
+    public void testGerParCorFile(@TempDir Path tempDir) throws JsonSyntaxException, IOException {
+        System.setProperty("input", this.getClass().getClassLoader().getResource("xmi/").getPath());
+        System.setProperty("ending", "test-geklappt.xmi");
+        System.setProperty("output", tempDir.toString());
+        System.setProperty("scale", "1");
+        System.setProperty("poolsize", "1");
+        System.setProperty("overwrite", "false");
+
+        GerParCorFile();
+
+        ExpectedDocumentAnnotations eda = ExpectedDocumentAnnotations.get20211223();
+
+        Path outputFile = Files.list(tempDir.resolve(eda.dateYear.get())).filter(p -> p.toFile().isFile()).findFirst().get();
+        DocumentDataPoint dp = new Gson().fromJson(Files.readString(outputFile), DocumentDataPoint.class);
+
+        ExpectedValues.getExpectedForGeklappt().assertEquals(dp.getSentences().get(0));
+        eda.assertEquals(dp.getDocumentAnnotation());
+
+        Assertions.assertTrue(true);
     }
 }

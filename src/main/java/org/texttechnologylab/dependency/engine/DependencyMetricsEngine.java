@@ -43,7 +43,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.PUNCT;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.ROOT;
 import io.azam.ulidj.ULID;
 
-public class DependencyDistanceEngine extends JCasFileWriter_ImplBase {
+public class DependencyMetricsEngine extends JCasFileWriter_ImplBase {
 
     public static final String PARAM_FAIL_ON_ERROR = "pFailOnError";
 

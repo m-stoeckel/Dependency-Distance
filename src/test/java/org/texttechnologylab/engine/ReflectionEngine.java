@@ -3,11 +3,11 @@ package org.texttechnologylab.engine;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.jcas.JCas;
 import org.texttechnologylab.dependency.data.DocumentDataPoint;
-import org.texttechnologylab.dependency.engine.DependencyDistanceEngine;
+import org.texttechnologylab.dependency.engine.DependencyMetricsEngine;
 
 import io.azam.ulidj.ULID;
 
-public class DummyEngine extends DependencyDistanceEngine {
+public class ReflectionEngine extends DependencyMetricsEngine {
 
     public DocumentDataPoint documentDataPoint;
 
