@@ -1,9 +1,7 @@
 package org.texttechnologylab.dependency.graph;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.OptionalDouble;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -13,6 +11,9 @@ import com.google.common.collect.Range;
 import com.google.common.graph.EndpointPair;
 import com.google.common.graph.ImmutableGraph;
 import com.google.common.graph.Traverser;
+import org.jetbrains.annotations.NotNull;
+import org.texttechnologylab.dependency.graph.random.RandomTree;
+import org.texttechnologylab.dependency.graph.zs.Tree;
 
 public class DependencyGraph {
 
@@ -20,8 +21,9 @@ public class DependencyGraph {
     public final ImmutableGraph<Integer> dependencyGraph;
     public final ImmutableGraph<Integer> dependencyGraphWithPunct;
 
-    public DependencyGraph(ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct)
-        throws InvalidDependencyGraphException {
+    public DependencyGraph(
+        ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct
+    ) throws InvalidDependencyGraphException {
         if (dependencyGraph.outDegree(0) < 0) {
             throw new InvalidDependencyGraphException("Dependency graph is empty!");
         }
@@ -67,7 +69,8 @@ public class DependencyGraph {
      * @return A list of the distances between the nodes in the dependency graph.
      */
     public ArrayList<Integer> getDependencyDistances() {
-        return this.dependencyGraph.edges()
+        return this.dependencyGraph
+            .edges()
             .stream()
             .filter(edge -> edge.source() > 0)
             .sorted(Comparator.comparingInt(EndpointPair::target))
@@ -84,13 +87,9 @@ public class DependencyGraph {
      * @return The sum of the distances between the nodes in the dependency graph.
      */
     public int getDependencyDistanceSum() {
-        return this.dependencyGraph.edges()
-            .stream()
-            .filter(edge -> edge.source() > 0)
-            .map(edge -> {
-                return Math.abs(edge.source() - edge.target());
-            })
-            .reduce(0, (a, b) -> a + b);
+        return this.dependencyGraph.edges().stream().filter(edge -> edge.source() > 0).map(edge -> {
+            return Math.abs(edge.source() - edge.target());
+        }).reduce(0, (a, b) -> a + b);
     }
 
     /**
@@ -99,7 +98,6 @@ public class DependencyGraph {
      * nodes in the dependency graph divided by the number of syntactic links.
      *
      * @return The mean dependency distance.
-     *
      * @see #getDependencyDistanceSum()
      * @see #getNumberOfSyntacticLinks()
      */
@@ -113,7 +111,6 @@ public class DependencyGraph {
      * of the product of the root distance and the sentence length.
      *
      * @return The normalized dependency distance.
-     *
      * @see #mdd()
      * @see #rootDistance()
      * @see #getSentenceLength()
@@ -126,42 +123,35 @@ public class DependencyGraph {
      * Calculates the number of crossing edges in the dependency graph.
      *
      * @return The number of crossing edges in the dependency graph.
-     *
      * @see #getNumberOfCrossings(EndpointPair)
-     *      getNumberOfCrossings(EndpointPair), which is used to calculate the
-     *      number of crossings of a single edge.
+     * getNumberOfCrossings(EndpointPair), which is used to calculate the
+     * number of crossings of a single edge.
      */
     public int crossings() {
-        return (
-            this.dependencyGraph.edges()
-                .stream()
-                .filter(edge -> edge.source() > 0)
-                .map(edge -> this.getNumberOfCrossings(edge))
-                .reduce(0, (a, b) -> a + b) /
-            2
-        );
+        return (this.dependencyGraph
+            .edges()
+            .stream()
+            .filter(edge -> edge.source() > 0)
+            .map(edge -> this.getNumberOfCrossings(edge))
+            .reduce(0, (a, b) -> a + b) / 2);
     }
 
     /**
      * Calculates the number of crossings of a single edge in this dependency graph.
      * Two edges are considered to cross one edges starts within the range of the
-     * and ends outside of the range of the other edge.
+     * and ends outside the range of the other edge.
      *
      * @param u The edge for which the number of crossings is calculated.
      * @return The number of crossings of the edge u.
      */
     private Integer getNumberOfCrossings(EndpointPair<Integer> u) {
         final Range<Integer> uRange = openRangeFromEdge(u);
-        return (int) this.dependencyGraph.edges()
+        return (int) this.dependencyGraph
+            .edges()
             .stream()
             .filter(edge -> edge.source() > 0)
-            .filter(v ->
-                u.source() != v.source() &&
-                u.source() != v.target() &&
-                u.target() != v.target() &&
-                u.target() != v.source() &&
-                uRange.contains(v.source()) != uRange.contains(v.target())
-            )
+            .filter(v -> u.source() != v.source() && u.source() != v.target() && u.target() != v.target() && u.target() != v.source() && uRange.contains(
+                v.source()) != uRange.contains(v.target()))
             .count();
     }
 
@@ -175,8 +165,7 @@ public class DependencyGraph {
      * nodes in the sentence.
      *
      * @return The length of the longest dependency path in the dependency graph
-     *         from the root node.
-     *
+     * from the root node.
      * @see #longestPath()
      * @see #calcLongestPath(Integer)
      */
@@ -185,13 +174,12 @@ public class DependencyGraph {
     }
 
     /**
-     * Calculates the weightest longest dependency path in the dependency graph
+     * Calculates the weighted longest dependency path in the dependency graph
      * starting from the root node 0 where the weights are the distances between the
      * nodes in the sentence.
      *
      * @return The length of the longest dependency path in the dependency graph
-     *         from the root node.
-     *
+     * from the root node.
      * @see #dependencyHeight()
      * @see #calcLongestPath(Integer)
      */
@@ -207,7 +195,8 @@ public class DependencyGraph {
      * @return The length of the longest dependency path from the given node.
      */
     private int calcLongestPath(Integer node) {
-        return this.dependencyGraph.successors(node)
+        return this.dependencyGraph
+            .successors(node)
             .stream()
             .map(successor -> Math.abs(node - successor) + this.calcLongestPath(successor))
             .max(Comparator.naturalOrder())
@@ -221,7 +210,6 @@ public class DependencyGraph {
      * in the dependency tree starting from the root node.
      *
      * @return The mean dependency depth.
-     *
      * @see #depthVariance()
      * @see #streamDependencyDepthFrom(Integer, Integer)
      */
@@ -234,14 +222,18 @@ public class DependencyGraph {
      * dependency graph.
      *
      * @return The variance of the dependency depths.
-     *
      * @see #depthMean()
      * @see #streamDependencyDepthFrom(Integer, Integer)
      */
     public double depthVariance() {
         List<Integer> depths = this.streamDependencyDepthFrom(0, 0).collect(Collectors.toList());
         double mean = depths.stream().mapToDouble(Double::valueOf).average().getAsDouble();
-        return depths.stream().map(depth -> Math.pow(depth - mean, 2)).mapToDouble(Double::valueOf).average().getAsDouble();
+        return depths
+            .stream()
+            .map(depth -> Math.pow(depth - mean, 2))
+            .mapToDouble(Double::valueOf)
+            .average()
+            .getAsDouble();
     }
 
     /**
@@ -250,7 +242,6 @@ public class DependencyGraph {
      * This is equal to the maximum dependency depth plus one.
      *
      * @return The height of the dependency tree.
-     *
      * @see #streamDependencyDepthFrom(Integer, Integer)
      */
     public int treeHeight() {
@@ -264,19 +255,23 @@ public class DependencyGraph {
      * @param node  The starting node.
      * @param depth The depth of the given node.
      * @return A stream of the dependency depths of all nodes in the dependency
-     *         graph starting from the given node.
+     * graph starting from the given node.
      */
-    private Stream<Integer> streamDependencyDepthFrom(Integer node, Integer depth) {
-        return this.dependencyGraph.successors(node)
+    private Stream<Integer> streamDependencyDepthFrom(
+        Integer node, Integer depth
+    ) {
+        return this.dependencyGraph
+            .successors(node)
             .stream()
-            .flatMap(successor -> Stream.concat(Stream.of(depth), this.streamDependencyDepthFrom(successor, depth + 1)));
+            .flatMap(successor -> Stream.concat(Stream.of(depth),
+                                                this.streamDependencyDepthFrom(successor, depth + 1)
+            ));
     }
 
     /**
      * Calculates the number of leaves in the dependency graph.
      *
      * @return The number of leaves in the dependency graph.
-     *
      * @see #recurseLeaves(Integer)
      */
     public int leaves() {
@@ -289,14 +284,15 @@ public class DependencyGraph {
      *
      * @param node The starting node.
      * @return The number of leaves in the dependency graph starting from the given
-     *         node.
+     * node.
      */
     private int recurseLeaves(Integer node) {
-        return this.dependencyGraph.successors(node)
+        return this.dependencyGraph
+            .successors(node)
             .stream()
-            .flatMap(successor ->
-                this.dependencyGraph.successors(successor).isEmpty() ? Stream.of(1) : Stream.of(this.recurseLeaves(successor))
-            )
+            .flatMap(successor -> this.dependencyGraph
+                .successors(successor)
+                .isEmpty() ? Stream.of(1) : Stream.of(this.recurseLeaves(successor)))
             .reduce(0, (a, b) -> a + b);
     }
 
@@ -305,7 +301,6 @@ public class DependencyGraph {
      * nodes in the dependency graph, excluding the root node.
      *
      * @return The tree degree.
-     *
      * @see #streamNodeDegree()
      */
     public int treeDegree() {
@@ -317,7 +312,6 @@ public class DependencyGraph {
      * degrees of all nodes in the dependency graph, excluding the root node.
      *
      * @return The mean tree degree.
-     *
      * @see #treeDegreeVariance()
      * @see #streamNodeDegree()
      */
@@ -330,14 +324,18 @@ public class DependencyGraph {
      * excluding the root node.
      *
      * @return The variance of the degrees of all nodes in the dependency graph.
-     *
      * @see #treeDegreeMean()
      * @see #streamNodeDegree()
      */
     public double treeDegreeVariance() {
         List<Integer> degrees = streamNodeDegree().skip(1).collect(Collectors.toList());
         double mean = degrees.stream().mapToDouble(Double::valueOf).average().getAsDouble();
-        return degrees.stream().map(degree -> Math.pow(degree - mean, 2)).mapToDouble(Double::valueOf).average().getAsDouble();
+        return degrees
+            .stream()
+            .map(degree -> Math.pow(degree - mean, 2))
+            .mapToDouble(Double::valueOf)
+            .average()
+            .getAsDouble();
     }
 
     /**
@@ -356,10 +354,15 @@ public class DependencyGraph {
      * @return The head-final ratio.
      */
     public double headFinalRatio() {
-        return this.dependencyGraph.nodes()
+        return this.dependencyGraph
+            .nodes()
             .stream()
             .skip(1)
-            .map(head -> this.dependencyGraph.successors(head).stream().mapToDouble(dependent -> head > dependent ? 1. : 0.).average())
+            .map(head -> this.dependencyGraph
+                .successors(head)
+                .stream()
+                .mapToDouble(dependent -> head > dependent ? 1. : 0.)
+                .average())
             .filter(OptionalDouble::isPresent)
             .mapToDouble(OptionalDouble::getAsDouble)
             .average()
@@ -375,12 +378,11 @@ public class DependencyGraph {
      * @return The head-final distance.
      */
     public int headFinalDistance() {
-        Integer rootNode = this.dependencyGraph.successors(0).stream().findFirst().get();
+        ImmutableGraph<Integer> graph = this.dependencyGraphWithPunct;
 
-        // Traverse the dependency graph in depth-first pre-order starting from the
-        // root node, and collect the order of the nodes.
-        final ArrayList<Integer> traversalOrder = new ArrayList<>(this.dependencyGraph.nodes().size() - 1);
-        Traverser.forGraph(this.dependencyGraphWithPunct).depthFirstPreOrder(rootNode).forEach(node -> traversalOrder.add(node));
+        Integer rootNode = getRootNode(graph);
+
+        final ArrayList<Integer> traversalOrder = getTraversalOrder(graph, rootNode);
 
         // Sort to obtain regular word order in sentence
         final ArrayList<Integer> wordOrder = new ArrayList<>(traversalOrder);
@@ -397,4 +399,75 @@ public class DependencyGraph {
         // Calculate the Levenshtein (edit) distance between the orders
         return LEVENSHTEIN_DISTANCE.apply(new String(originalCharacters), new String(traversalCharacters));
     }
+
+    @NotNull
+    private Integer getRootNode() {
+        return getRootNode(this.dependencyGraphWithPunct);
+    }
+
+    @NotNull
+    public static Integer getRootNode(ImmutableGraph<Integer> graph) {
+        return graph.successors(0).stream().findFirst().get();
+    }
+
+    @NotNull
+    public static ArrayList<Integer> getTraversalOrder(
+        final ImmutableGraph<Integer> graph
+    ) {
+        return getTraversalOrder(graph, getRootNode(graph));
+    }
+
+    @NotNull
+    /**
+     * Traverse the dependency graph in depth-first pre-order starting from the root node, and collect the order of the nodes.
+     */ public static ArrayList<Integer> getTraversalOrder(
+        final ImmutableGraph<Integer> graph, Integer rootNode
+    ) {
+        final ArrayList<Integer> traversalOrder = new ArrayList<>(graph.nodes().size());
+        Traverser.forGraph(graph).depthFirstPreOrder(rootNode).forEach(node -> traversalOrder.add(node));
+        return traversalOrder;
+    }
+
+    public int randomTreeDistance() throws InvalidDependencyGraphException {
+        try {
+            String treeString = this.graphToZsStringRepresentation();
+            Tree zsTree = new Tree(treeString);
+            int treeSize = this.dependencyGraph.nodes().size() - 1;
+            int maxTries = 16;
+            for (int i = 0; i < maxTries; i++) {
+                try {
+                    String randomTreeString = DependencyGraphStringifier.graphToZsStringRepresentation(RandomTree.getRandomGraph(
+                        treeSize));
+                    try {
+                        Tree zsRandomTree = new Tree(randomTreeString);
+                        try {
+                            return Tree.ZhangShasha(zsTree, zsRandomTree);
+                        } catch (Exception e) {
+                            throw new RuntimeException(String.format("Failed to compare trees:\n%s\n%s",
+                                                                     treeString,
+                                                                     randomTreeString
+                            ), e);
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to stringfy random tree", e);
+                    }
+                } catch (Exception e) {
+                    // Ignore any exception here...
+                    throw new RuntimeException("Failed to generate random tree", e);
+                }
+            }
+            String message = String.format("Failed to generate a valid random tree of length %d in %d tries!",
+                                           treeSize,
+                                           maxTries
+            );
+            throw new RuntimeException(message);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String graphToZsStringRepresentation() {
+        return DependencyGraphStringifier.graphToZsStringRepresentation(this.dependencyGraph);
+    }
+
 }

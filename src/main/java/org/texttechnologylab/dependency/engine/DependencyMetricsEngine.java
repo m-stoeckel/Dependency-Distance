@@ -148,6 +148,7 @@ public class DependencyMetricsEngine extends JCasFileWriter_ImplBase {
                 documentDataPoint.add(processDependencies(new ArrayList<>(dependencyMap.get(sentence))));
             } catch (InvalidDependencyGraphException ignored) {
                 // Catch exception for invalid sentences
+                getLogger().error("%s\n%s\n", ignored.getMessage(), ignored.getCause());
             }
         }
     }
