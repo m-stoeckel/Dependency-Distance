@@ -20,6 +20,7 @@ public class ZhangShashaTest {
         testTreeDistance("d", "g(h)", 2);
 
         testTreeDistance("node0", "node1(node2)", 2);
+        testTreeDistance("node11", "node1(node2)", 2);
     }
 
     private static void testTreeDistance(

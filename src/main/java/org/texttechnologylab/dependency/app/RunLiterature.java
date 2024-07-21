@@ -33,8 +33,7 @@ public class RunLiterature {
         public Path in;
 
         public PathPair(
-                Path in,
-                Path out
+            Path in, Path out
         ) {
             this.in = in;
             this.out = out;
@@ -47,9 +46,7 @@ public class RunLiterature {
         boolean pFailOnError = false;
 
         ArrayList<String> fileList = new ArrayList<String>();
-        Iterator<String> iterator = Arrays
-                .stream(args)
-                .iterator();
+        Iterator<String> iterator = Arrays.stream(args).iterator();
         Optional<String> pCorpusName = Optional.empty();
         Optional<String> pPattern = Optional.empty();
         while (iterator.hasNext()) {
@@ -78,15 +75,9 @@ public class RunLiterature {
         System.out.println(Arrays.toString(args));
 
         if (pCorpusName.isPresent()) {
-            if (pCorpusName
-                    .get()
-                    .toLowerCase()
-                    .contains("coha")) {
+            if (pCorpusName.get().toLowerCase().contains("coha")) {
                 pPattern = pPattern.isPresent() ? pPattern : Optional.of(".*/(?<parser>[^/]+)/text_(?<subset>[^_]+)_(?<decade>\\d{4}).*");
-            } else if (pCorpusName
-                    .get()
-                    .toLowerCase()
-                    .contains("dta")) {
+            } else if (pCorpusName.get().toLowerCase().contains("dta")) {
                 pPattern = pPattern.isPresent() ? pPattern : Optional.of(".*/(?<parser>[^/]+)/(?<subset>[^/]+/[^/]+)/(?<decade>\\d{4}).*");
             }
         } else {
@@ -95,9 +86,9 @@ public class RunLiterature {
 
         if (fileList.size() < 2) {
             throw new IllegalArgumentException(String.format(
-                    "Expected at least 2 files (input, output), but got %d: %s",
-                    fileList.size(),
-                    fileList
+                "Expected at least 2 files (input, output), but got %d: %s",
+                fileList.size(),
+                fileList
             ));
         }
         final String outputPath = fileList.remove(fileList.size() - 1);
@@ -108,81 +99,61 @@ public class RunLiterature {
         final String fCorpusName = pCorpusName.get();
         final String fPattern = pPattern.get();
 
-        fileList
-                .stream()
-                .flatMap((String pathString) -> {
-                    Path path = Paths
-                            .get(pathString)
-                            .toAbsolutePath();
-                    File file = path.toFile();
-                    if (pathString.contains("*")) {
-                        final GlobVisitor visitor = new GlobVisitor(
-                                pathString,
-                                outputPath
-                        );
-                        try {
-                            Path root = Paths.get(Arrays
-                                                          .stream(pathString.split("\\*"))
-                                                          .findFirst()
-                                                          .get());
-                            Files.walkFileTree(
-                                    root,
-                                    visitor
-                            );
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        return visitor.stream();
-                    }
-                    if (file.isDirectory()) {
-                        return Stream
-                                .of(file.listFiles())
-                                .map(f -> new PathPair(
-                                        f.toPath(),
-                                        Paths.get(
-                                                outputPath,
-                                                f
-                                                        .getAbsolutePath()
-                                                        .substring(path
-                                                                           .toString()
-                                                                           .length())
-                                        )
-                                ));
-                    }
-                    return Stream.of(new PathPair(
-                            path,
-                            Paths.get(
-                                    outputPath,
-                                    file.getName()
-                            )
-                    ));
-                })
-//                .parallel()
-                .forEach(pathPair -> process(
-                        pathPair.in.toFile(),
-                        pathPair.out.toFile(),
-                        fOverwrite,
-                        fFailOnError,
-                        fCompression,
-                        fCorpusName,
-                        fPattern
+        fileList.stream().flatMap((String pathString) -> {
+            Path path = Paths.get(pathString).toAbsolutePath();
+            File file = path.toFile();
+            if (pathString.contains("*")) {
+                final GlobVisitor visitor = new GlobVisitor(
+                    pathString,
+                    outputPath
+                );
+                try {
+                    Path root = Paths.get(Arrays.stream(pathString.split("\\*")).findFirst().get());
+                    Files.walkFileTree(
+                        root,
+                        visitor
+                    );
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return visitor.stream();
+            }
+            if (file.isDirectory()) {
+                return Stream.of(file.listFiles()).map(f -> new PathPair(
+                    f.toPath(),
+                    Paths.get(
+                        outputPath,
+                        f.getAbsolutePath().substring(path.toString().length())
+                    )
                 ));
+            }
+            return Stream.of(new PathPair(
+                path,
+                Paths.get(
+                    outputPath,
+                    file.getName()
+                )
+            ));
+        }).parallel().map(pathPair -> process(
+            pathPair.in.toFile(),
+            pathPair.out.toFile(),
+            fOverwrite,
+            fFailOnError,
+            fCompression,
+            fCorpusName,
+            fPattern
+        )).toList();
     }
 
-    private static void process(
-            final File inputFile,
-            File outputFile,
-            final boolean pOverwrite,
-            final boolean pFailOnError,
-            final CompressionMethod pCompression,
-            final String pCorpusName,
-            final String pPattern
+    private static boolean process(
+        final File inputFile, File outputFile, final boolean pOverwrite, final boolean pFailOnError,
+        final CompressionMethod pCompression, final String pCorpusName, final String pPattern
     ) {
         try {
             if (outputFile.exists() && !pOverwrite) {
                 throw new IllegalArgumentException(String.format(
-                        "Output file '%s' already exists and overwrite is disabled",
-                        outputFile
+                    "Output file '%s' already exists and overwrite is disabled",
+                    outputFile
                 ));
             }
 
@@ -190,121 +161,96 @@ public class RunLiterature {
             Matcher matcher = pattern.matcher(inputFile.getAbsolutePath());
             if (!matcher.matches()) {
                 throw new IllegalArgumentException(String.format(
-                        "File '%s' does not match pattern '%s'",
-                        inputFile.getAbsolutePath(),
-                        pPattern
+                    "File '%s' does not match pattern '%s'",
+                    inputFile.getAbsolutePath(),
+                    pPattern
                 ));
             }
 
-            String subset = matcher
-                    .group("subset")
-                    .replace(
-                            '/',
-                            '-'
-                    );
+            String subset = matcher.group("subset").replace(
+                '/',
+                '-'
+            );
             String parser = matcher.group("parser");
             String decade = matcher.group("decade");
 
             String documentId = pCorpusName + "/" + subset + "/" + parser + "/" + decade;
-            String documentUri = "file://" + inputFile
-                    .toPath()
-                    .toAbsolutePath();
+            String documentUri = "file://" + inputFile.toPath().toAbsolutePath();
 
-            outputFile = Paths
-                    .get(
-                            outputFile
-                                    .getParentFile()
-                                    .getAbsolutePath(),
-                            String.join(
-                                    "-",
-                                    decade,
-                                    subset,
-                                    parser
-                            ) + ".json" + pCompression.getExtension()
-                    )
-                    .toFile();
+            outputFile = Paths.get(
+                outputFile.getParentFile().getAbsolutePath(),
+                String.join(
+                    "-",
+                    decade,
+                    subset,
+                    parser
+                ) + ".json" + pCompression.getExtension()
+            ).toFile();
 
 
             GraphIterator graphIterator = new GraphIterator(new BufferedReader(new InputStreamReader(CompressionUtils.getInputStream(
-                    inputFile.getName(),
-                    new FileInputStream(inputFile)
+                inputFile.getName(),
+                new FileInputStream(inputFile)
             ))));
 
-            ArrayList<NamedSentenceDataPoint> sentenceDataPoints = Streams
-                    .stream(graphIterator)
-//                    .parallel()  // FIXME: The Zang-Shasha implementation is not thread safe!
-                    .map(item -> {
-                        try {
-                            return Optional.<NamedSentenceDataPoint>of(getSentenceDataPoint(item));
-                        } catch (InvalidDependencyGraphException e) {
-                            if (pFailOnError) {
-                                throw new RuntimeException(e);
-                            }
+            ArrayList<NamedSentenceDataPoint> sentenceDataPoints = Streams.stream(graphIterator)
+                .parallel()
+                .map(item -> {
+                    try {
+                        return Optional.of(getSentenceDataPoint(item));
+                    } catch (InvalidDependencyGraphException e) {
+                        if (pFailOnError) {
+                            throw new RuntimeException(e);
                         }
-                        return Optional.<NamedSentenceDataPoint>empty();
-                    })
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toCollection(ArrayList::new));
+                    }
+                    return Optional.<NamedSentenceDataPoint>empty();
+                })
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toCollection(ArrayList::new));
 
             DocumentDataPoint documentDataPoint = new DocumentDataPoint();
-            documentDataPoint
-                    .getDocumentAnnotation()
-                    .put(
-                            "file",
-                            inputFile.getName()
-                    );
-            documentDataPoint
-                    .getDocumentAnnotation()
-                    .put(
-                            "parser",
-                            parser
-                    );
-            documentDataPoint
-                    .getDocumentAnnotation()
-                    .put(
-                            "dateYear",
-                            decade
-                    );
+            documentDataPoint.getDocumentAnnotation().put(
+                "file",
+                inputFile.getName()
+            );
+            documentDataPoint.getDocumentAnnotation().put(
+                "parser",
+                parser
+            );
+            documentDataPoint.getDocumentAnnotation().put(
+                "dateYear",
+                decade
+            );
 
-            documentDataPoint
-                    .getDocumentMetaData()
-                    .put(
-                            "documentId",
-                            documentId
-                    );
-            documentDataPoint
-                    .getDocumentMetaData()
-                    .put(
-                            "documentUri",
-                            documentUri
-                    );
+            documentDataPoint.getDocumentMetaData().put(
+                "documentId",
+                documentId
+            );
+            documentDataPoint.getDocumentMetaData().put(
+                "documentUri",
+                documentUri
+            );
 
-            documentDataPoint
-                    .getSentences()
-                    .addAll(sentenceDataPoints);
+            documentDataPoint.getSentences().addAll(sentenceDataPoints);
 
             System.out.printf(
-                    "Processed %d/%d graphs from '%s'%n",
-                    documentDataPoint
-                            .getSentences()
-                            .size(),
-                    graphIterator.count(),
-                    inputFile.toPath()
+                "Processed %d/%d graphs from '%s'%n",
+                documentDataPoint.getSentences().size(),
+                graphIterator.count(),
+                inputFile.toPath()
             );
 
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                    CompressionUtils.getOutputStream(outputFile),
-                    StandardCharsets.UTF_8
+                CompressionUtils.getOutputStream(outputFile),
+                StandardCharsets.UTF_8
             ))) {
                 writer.write(new Gson().toJson(documentDataPoint));
 
                 System.out.printf(
-                        "Wrote %d data points to '%s'%n",
-                        documentDataPoint
-                                .getSentences()
-                                .size(),
-                        outputFile
+                    "Wrote %d data points to '%s'%n",
+                    documentDataPoint.getSentences().size(),
+                    outputFile
                 );
             }
         } catch (Exception e) {
@@ -312,12 +258,14 @@ public class RunLiterature {
                 throw new RuntimeException(e);
             } else {
                 System.err.printf(
-                        "Exception while processing '%s':%n",
-                        inputFile.getAbsolutePath()
+                    "Exception while processing '%s':%n",
+                    inputFile.getAbsolutePath()
                 );
                 e.printStackTrace();
+                return false;
             }
         }
+        return true;
     }
 
     private static class GlobVisitor extends SimpleFileVisitor<Path> {
@@ -327,25 +275,15 @@ public class RunLiterature {
         final String outputPath;
 
         public GlobVisitor(
-                final String pattern,
-                final String outputPath
+            final String pattern, final String outputPath
         ) {
-            this.root = Paths
-                    .get(Arrays
-                                 .stream(pattern.split("\\*"))
-                                 .findFirst()
-                                 .get())
-                    .toAbsolutePath()
-                    .toString();
+            this.root = Paths.get(Arrays.stream(pattern.split("\\*")).findFirst().get()).toAbsolutePath().toString();
             this.outputPath = outputPath;
-            this.matcher = FileSystems
-                    .getDefault()
-                    .getPathMatcher("glob:" + pattern);
+            this.matcher = FileSystems.getDefault().getPathMatcher("glob:" + pattern);
         }
 
         public FileVisitResult visitFile(
-                Path file,
-                BasicFileAttributes attrs
+            Path file, BasicFileAttributes attrs
         ) {
             if (this.matcher.matches(file)) {
                 innerList.add(file.toString());
@@ -354,22 +292,16 @@ public class RunLiterature {
         }
 
         public Stream<PathPair> stream() {
-            return innerList
-                    .stream()
-                    .sorted()
-                    .map(f -> {
-                        Path p = Paths.get(f);
-                        return new PathPair(
-                                p,
-                                Paths.get(
-                                        this.outputPath,
-                                        p
-                                                .toAbsolutePath()
-                                                .toString()
-                                                .substring(this.root.length())
-                                )
-                        );
-                    });
+            return innerList.stream().sorted().map(f -> {
+                Path p = Paths.get(f);
+                return new PathPair(
+                    p,
+                    Paths.get(
+                        this.outputPath,
+                        p.toAbsolutePath().toString().substring(this.root.length())
+                    )
+                );
+            });
         }
     }
 
@@ -378,44 +310,41 @@ public class RunLiterature {
         public final String textId;
 
         public NamedSentenceDataPoint(
-                String textId,
-                ImmutableGraph<Integer> dependencyGraph,
-                ImmutableGraph<Integer> dependencyGraphWithPunct
+            String textId, ImmutableGraph<Integer> dependencyGraph, ImmutableGraph<Integer> dependencyGraphWithPunct
         ) throws InvalidDependencyGraphException {
             super(
-                    dependencyGraph,
-                    dependencyGraphWithPunct
+                dependencyGraph,
+                dependencyGraphWithPunct
             );
             this.textId = textId;
         }
     }
 
-    private static NamedSentenceDataPoint getSentenceDataPoint(GraphIteratorItem item) throws InvalidDependencyGraphException {
-        Builder<Integer> graphBuilder = GraphBuilder
-                .directed()
-                .<Integer>immutable()
-                .addNode(0);
+    private static NamedSentenceDataPoint getSentenceDataPoint(
+        GraphIteratorItem item
+    ) throws InvalidDependencyGraphException {
+        Builder<Integer> graphBuilder = GraphBuilder.directed().<Integer>immutable().addNode(0);
 
         for (Integer[] edge : item.dependencyEdges) {
             graphBuilder.putEdge(
-                    edge[0],
-                    edge[1]
+                edge[0],
+                edge[1]
             );
         }
         ImmutableGraph<Integer> dependencyGraph = graphBuilder.build();
 
         for (Integer[] edge : item.punctEdges) {
             graphBuilder.putEdge(
-                    edge[0],
-                    edge[1]
+                edge[0],
+                edge[1]
             );
         }
         ImmutableGraph<Integer> dependencyGraphWithPunct = graphBuilder.build();
 
         return new NamedSentenceDataPoint(
-                item.textId,
-                dependencyGraph,
-                dependencyGraphWithPunct
+            item.textId,
+            dependencyGraph,
+            dependencyGraphWithPunct
         );
     }
 }
